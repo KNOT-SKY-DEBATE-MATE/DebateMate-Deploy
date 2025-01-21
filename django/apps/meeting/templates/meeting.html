@@ -55,7 +55,7 @@
       <!-- Meeting Title -->
       <div class="d-flex align-items-center gap-2 pb-3 border-bottom">
         <i class="material-icons text-info">video_camera_front</i>
-        <h5 class="text-truncate mb-0 fw-bold">[[ member.user.username ]]</h5>
+        <h5 class="text-truncate mb-0 fw-bold">[[ meetingData.name ]]</h5>
       </div>
 
       <!-- Participants Grid -->
@@ -92,7 +92,7 @@
         <div class="d-flex align-items-center gap-3 mb-3 p-2 rounded bg-light">
           <img src="https://placehold.jp/40x40.png" alt="User Icon" class="rounded-circle shadow-sm" width="40" height="40">
           <div class="flex-grow-1">
-            <h6 class="mb-0 fw-semibold">[[ member.user.username ]]</h6>
+            <h6 class="mb-0 fw-semibold">[[ message.sender.nickname ]]</h6>
             <small class="text-muted">オンライン</small>
           </div>
         </div>
@@ -300,8 +300,8 @@
           },
           meetingMemberList: [],
           meetingData: {
-            name: "{{ meeting.title }}", // titleフィールドを表示
-            description: "{{ meeting.description }}" // descriptionフィールドを表示
+            name: "",  // 空文字列で初期化
+            description: "" // 空文字列で初期化
           },
           userData: {
             username: "Username"
@@ -348,9 +348,12 @@
           this.meetingMemberList = (await axios.get(`/api/meeting/${this.meetingId}/member/`)).data;
           
           // スクロール処理
-          this.$nextTick(() => ((e) => { 
-            e.scrollTop = e.scrollHeight; 
-          })(document.getElementById('message-list')));
+          this.$nextTick(() => {
+            const messageList = document.getElementById('message-list');
+            if (messageList) {
+              messageList.scrollTop = messageList.scrollHeight;
+            }
+          });
           
         } catch (error) {
           if (error.response == undefined) {
