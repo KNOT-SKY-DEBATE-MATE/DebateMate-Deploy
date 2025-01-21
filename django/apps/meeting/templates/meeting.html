@@ -79,23 +79,17 @@
                     <i class="material-icons" style="font-size: 16px;">warning</i>
                     <span>キック中</span>
                   </div>
-                  <!-- キック投票ボタン -->
-                  <button v-else class="btn btn-sm btn-outline-danger"
-                          @click="openVoteModal(member)"
-                          :disabled="votingInProgress">
-                    <i class="material-icons" style="font-size: 16px;">how_to_vote</i>
-                  </button>
                 </div>
               </div>
               <!-- キックされている場合の投票状況 -->
               <div v-if="isKicked(member)" class="mt-2 small">
                 <div class="progress" style="height: 4px;">
                   <div class="progress-bar bg-info" 
-                      :style="{ width: (getCurrentVotes(member.id) / getRequiredVotes() * 100) + '%' }">
+                       :style="{ width: (getCurrentVotes(member.id) / getRequiredVotes() * 100) + '%' }">
                   </div>
                 </div>
                 <div class="text-muted text-center mt-1">
-                  投票状況: [[ getCurrentVotes(member.id) ]] / [[ getRequiredVotes() ]]
+                  ポリシー違反によりキック中
                 </div>
               </div>
             </div>
@@ -299,322 +293,259 @@
                 </div>
               </div>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" @click="userListWindowOpen = false">閉じる</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 投票モーダル (bodyタグの最後、appの中に追加) -->
-    <div v-if="showVoteModal" class="modal fade show" style="display: block; background: rgba(0,0,0,0.5)">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">キック投票</h5>
-            <button type="button" class="btn-close" @click="showVoteModal = false"></button>
-          </div>
-          <div class="modal-body">
-            <p>[[ selectedMember?.user.username ]] さんをキックしますか？</p>
-            <div class="d-flex justify-content-end gap-2">
-              <button class="btn btn-secondary" @click="showVoteModal = false">
-                キャンセル
-              </button>
-              <button class="btn btn-danger" 
-                      @click="submitKickVote(selectedMember.id)"
-                      :disabled="votingInProgress">
-                <span v-if="votingInProgress" class="spinner-border spinner-border-sm me-2"></span>
-                投票する
-              </button>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" @click="userListWindowOpen = false">閉じる</button>
             </div>
           </div>
-        </div>
       </div>
     </div>
   </div>
-
-  <script>
-    const app = Vue.createApp({
-      delimiters: ['[[', ']]'],
-      data() {
-        return {
-          meetingId: "{{ meeting.id }}",
-          isLoading: false,
-          user: null,
-          meetingMessageList: [],
-          meetingMessageCreateForm: {
-            content: "",
-          },
-          meetingMemberList: [],
-          meetingData: {
-            name: "",  // 空文字列で初期化
-            description: "" // 空文字列で初期化
-          },
-          userData: {
-            username: "Username"
-          },
-          userListWindowOpen: false,
-          voiceRecognitionEnabled: false,
-          userListWindow: null,
-          isVoting: false,
-          kickVotes: [],
-          showVoteModal: false,
-          selectedMember: null,
-          votingInProgress: false
-        };
+</body>
+  
+<script>
+const app = Vue.createApp({
+  delimiters: ['[[', ']]'],
+  data() {
+    return {
+      meetingId: "{{ meeting.id }}",
+      isLoading: false,
+      user: null,
+      meetingMessageList: [],
+      meetingMessageCreateForm: {
+        content: "",
       },
+      meetingMemberList: [],
+      meetingData: {
+        name: "",  // 空文字列で初期化
+        description: "" // 空文字列で初期化
+      },
+      userData: {
+        username: "Username"
+      },
+      userListWindowOpen: false,
+      voiceRecognitionEnabled: false,
+      userListWindow: null,
+      isVoting: false,
+      kickVotes: [],
+      showVoteModal: false,
+      selectedMember: null,
+      votingInProgress: false
+    };
+  },
 
 
-      watch: {
-        // meetingMemberListの変更を監視して別ウィンドウに通知
-        meetingMemberList: {
-          handler(newValue) {
-            if (this.userListWindow && !this.userListWindow.closed) {
-              this.userListWindow.postMessage({
-                type: 'updateMembers',
-                members: newValue
-              }, '*');
-            }
-          },
-          deep: true
+  watch: {
+    // meetingMemberListの変更を監視して別ウィンドウに通知
+    meetingMemberList: {
+      handler(newValue) {
+        if (this.userListWindow && !this.userListWindow.closed) {
+          this.userListWindow.postMessage({
+            type: 'updateMembers',
+            members: newValue
+          }, '*');
         }
       },
+      deep: true
+    }
+  },
 
-      async created() {
-        if (this.isLoading) return;
+  async created() {
+    if (this.isLoading) return;
+    try {
+      this.isLoading = true;
+      
+      // 並列でデータを取得
+      const [
+        userResponse,
+        meetingResponse,
+        messageResponse,
+        memberResponse,
+        kickVotesResponse
+      ] = await Promise.all([
+        axios.get("/api/user/"),
+        axios.get(`/api/meeting/${this.meetingId}/`),
+        axios.get(`/api/meeting/${this.meetingId}/message/`),
+        axios.get(`/api/meeting/${this.meetingId}/member/`),
+        axios.get(`/api/meeting/${this.meetingId}/member/kick/`)
+      ]);
+
+      // データを設定
+      if (userResponse?.data) {
+        this.user = userResponse.data;
+      }
+      
+      this.meetingData = {
+        name: meetingResponse.data.title,
+        description: meetingResponse.data.description || "議題が設定されていません"
+      };
+      this.meetingMessageList = messageResponse.data;
+      this.meetingMemberList = memberResponse.data;
+      this.kickVotes = kickVotesResponse.data;
+
+      // スクロール処理
+      this.$nextTick(() => {
+        const messageList = document.getElementById('message-list');
+        if (messageList) {
+          messageList.scrollTop = messageList.scrollHeight;
+        }
+      });
+
+    } catch (error) {
+      console.error("ERROR:", error);
+      // エラーハンドリング
+    } finally {
+      this.isLoading = false;
+    }
+  },
+
+  mounted() {
+    // 基本設定
+    axios.defaults.xsrfCookieName = "csrftoken";
+    axios.defaults.xsrfHeaderName = "X-CSRFToken";
+    axios.defaults.withCredentials = true;
+
+    this.websocket = new WebSocket(`wss://${location.host}/ws/meeting/{{ meeting.id }}/`);
+    this.websocket.onmessage = async (event) => {
+      const messageData = event.data;
+      
+      // メッセージ作成イベント
+      if (messageData === "MESSAGE.CREATE") {
         try {
-          this.isLoading = true;
-          
-          // 並列でデータを取得
-          const [
-            userResponse,
-            meetingResponse,
-            messageResponse,
-            memberResponse,
-            kickVotesResponse
-          ] = await Promise.all([
-            axios.get("/api/user/"),
-            axios.get(`/api/meeting/${this.meetingId}/`),
-            axios.get(`/api/meeting/${this.meetingId}/message/`),
-            axios.get(`/api/meeting/${this.meetingId}/member/`),
-            axios.get(`/api/meeting/${this.meetingId}/member/kick/`)
-          ]);
-
-          // データを設定
-          if (userResponse?.data) {
-            this.user = userResponse.data;
-          }
-          
-          this.meetingData = {
-            name: meetingResponse.data.title,
-            description: meetingResponse.data.description || "議題が設定されていません"
-          };
-          this.meetingMessageList = messageResponse.data;
-          this.meetingMemberList = memberResponse.data;
-          this.kickVotes = kickVotesResponse.data;
-
-          // スクロール処理
+          this.meetingMessageList = (await axios.get(`/api/meeting/{{ meeting.id }}/message/`)).data;
           this.$nextTick(() => {
             const messageList = document.getElementById('message-list');
             if (messageList) {
               messageList.scrollTop = messageList.scrollHeight;
             }
           });
-
         } catch (error) {
-          console.error("ERROR:", error);
-          // エラーハンドリング
-        } finally {
-          this.isLoading = false;
+          console.error(`ERROR: ${error?.response?.status} ${error?.response?.statusText}`);
         }
-      },
-
-      mounted() {
-        // 基本設定
-        axios.defaults.xsrfCookieName = "csrftoken";
-        axios.defaults.xsrfHeaderName = "X-CSRFToken";
-        axios.defaults.withCredentials = true;
-
-        this.websocket = new WebSocket(`wss://${location.host}/ws/meeting/{{ meeting.id }}/`);
-        this.websocket.onmessage = async (event) => {
-          const messageData = event.data;
-          
-          // メッセージ作成イベント
-          if (messageData === "MESSAGE.CREATE") {
-            try {
-              this.meetingMessageList = (await axios.get(`/api/meeting/{{ meeting.id }}/message/`)).data;
-              this.$nextTick(() => {
-                const messageList = document.getElementById('message-list');
-                if (messageList) {
-                  messageList.scrollTop = messageList.scrollHeight;
-                }
-              });
-            } catch (error) {
-              console.error(`ERROR: ${error?.response?.status} ${error?.response?.statusText}`);
-            }
-          } 
-          // キック投票イベント
-          else if (messageData === "KICK_VOTE" || messageData === "KICK_UPDATE") {
-            await this.fetchKickVotes();
-          }
-        };
-        this.initializeVotingState();
-      },
-
-      methods: {
-        // 投票状態を適切に初期化するロジック
-        initializeVotingState() {
-          this.isVoting = false;
-          this.votingInProgress = false;
-          this.selectedMember = null;
-          this.showVoteModal = false;
-        },
-        async onCreateMessage() {
-          try {
-            this.isLoading = true;
-            await axios.get("/api/user/csrftoken/");
-            this.meetingMessageList.push(
-              (await axios.post(`/api/meeting/${this.meetingId}/message/`, this.meetingMessageCreateForm)).data
-            );
-            this.meetingMessageCreateForm.content = "";
-            this.$nextTick(() => {
-              const messageList = document.getElementById('message-list');
-              if (messageList) {
-                messageList.scrollTop = messageList.scrollHeight;
-              }
-            });
-          } catch (error) {
-            if (error.response == undefined) {
-              console.error("ERROR: Unknown error");
-            } else {
-              console.error(error);
-              alert({
-                400: "メッセージが既に送信されています",
-                403: "権限がありません",
-                404: "ミーティングが見つかりません",
-                500: "予期せぬエラーが発生しました",
-              }[error.response.status] || "不明なエラーが発生しました。サイト管理者にお問い合わせください");
-            }
-          } finally {
-            this.isLoading = false;
-          }
-        },
-        exitToGroup() {
-          window.location.href = "/group/{{ meeting.group.id }}/";
-        },
-
-        openUserListWindow() {
-          const width = 800;
-          const height = 600;
-          const left = (window.screen.width - width) / 2;
-          const top = (window.screen.height - height) / 2;
-          this.userListWindow = window.open(
-            `/meeting/userlist/${this.meetingId}/`,
-            'UserList',
-            `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-          );
-        },
-
-        toggleAnnotation(message) {
-          if (message.showAnnotation) {
-            message.showAnnotation = false;
-          } else {
-            message.showAnnotation = true;
-            if (!message.annotation) {
-              this.fetchAnnotation(message);
-            }
-          }
-        },
-
-        async fetchAnnotation(message) {
-          try {
-            this.isLoading = true;
-            const response = await axios.get(`/api/meeting/${this.meetingId}/message/${message.id}/annotation/`);
-            console.log('Annotation response:', response.data);
-            message.annotation = response.data;
-          } catch (error) {
-            console.error("Failed to fetch annotation:", error);
-            message.annotation = { content: "アノテーションの取得に失敗しました" };
-          } finally {
-            this.isLoading = false;
-          }
-        },
-
-        async fetchKickVotes() {
-          try {
-            const response = await axios.get(`/api/meeting/${this.meetingId}/member/kick/`);
-            this.kickVotes = response.data;
-          } catch (error) {
-            console.error("Failed to fetch kick votes:", error);
-          }
-        },
-
-        async submitKickVote(memberId) {
-          if (this.votingInProgress) return;
-          try {
-            this.votingInProgress = true;
-            const response = await axios.post(`/api/meeting/${this.meetingId}/member/kick/`, {
-              member_id: memberId 
-            });
-            
-            // キック状態を更新
-            await this.fetchKickVotes();
-            
-            // 投票が成功した場合、モーダルを閉じる
-            if (response.data.success) {
-              this.showVoteModal = false;
-            }
-          } catch (error) {
-            console.error("Failed to submit kick vote:", error);
-            alert(error.response?.data?.message || "投票の送信に失敗しました");
-          } finally {
-            this.votingInProgress = false;
-          }
-        },
-
-        // 投票モーダルを開く
-        openVoteModal(member) {
-          this.selectedMember = member;
-          this.showVoteModal = true;
-        },
-
-        // キックされているかチェック
-
-
-        isKicked(member) {
-          if (!member || !this.kickVotes) return false;
-          const memberVotes = this.kickVotes.find(vote => vote.member_id === member.id);
-          return memberVotes && memberVotes.is_kicked;
-        },
-
-        // 必要な投票数を取得(例：参加者の過半数)
-        getRequiredVotes() {
-          return Math.ceil((this.meetingMemberList.length || 1) / 2);
-        },
-
-        // 現在の投票数を取得
-
-        getCurrentVotes(memberId) {
-          const memberVotes = this.kickVotes.find(vote => vote.member_id === memberId);
-          return memberVotes ? memberVotes.votes : 0;
-        },
-
-        async cancelKickVote(memberId) {
-          try {
-            await axios.delete(`/api/meeting/${this.meetingId}/member/kick/`, {
-              data: { member_id: memberId }
-            });
-            await this.fetchKickVotes();
-          } catch (error) {
-            console.error("Failed to cancel kick vote:", error);
-            alert("投票のキャンセルに失敗しました");
-          }
-        },
+      } 
+      // キック投票イベント
+      else if (messageData === "KICK_VOTE" || messageData === "KICK_UPDATE") {
+        await this.fetchKickVotes();
       }
-    });
-    app.mount('#app');
-  </script>
-</body>
+    };
+    this.initializeVotingState();
+  },
 
+  methods: {
+    // 投票状態を適切に初期化するロジック
+    initializeVotingState() {
+      this.isVoting = false;
+      this.votingInProgress = false;
+      this.selectedMember = null;
+      this.showVoteModal = false;
+    },
+    async onCreateMessage() {
+      try {
+        this.isLoading = true;
+        await axios.get("/api/user/csrftoken/");
+        this.meetingMessageList.push(
+          (await axios.post(`/api/meeting/${this.meetingId}/message/`, this.meetingMessageCreateForm)).data
+        );
+        this.meetingMessageCreateForm.content = "";
+        this.$nextTick(() => {
+          const messageList = document.getElementById('message-list');
+          if (messageList) {
+            messageList.scrollTop = messageList.scrollHeight;
+          }
+        });
+      } catch (error) {
+        if (error.response == undefined) {
+          console.error("ERROR: Unknown error");
+        } else {
+          console.error(error);
+          alert({
+            400: "メッセージが既に送信されています",
+            403: "権限がありません",
+            404: "ミーティングが見つかりません",
+            500: "予期せぬエラーが発生しました",
+          }[error.response.status] || "不明なエラーが発生しました。サイト管理者にお問い合わせください");
+        }
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    exitToGroup() {
+      window.location.href = "/group/{{ meeting.group.id }}/";
+    },
+
+    openUserListWindow() {
+      const width = 800;
+      const height = 600;
+      const left = (window.screen.width - width) / 2;
+      const top = (window.screen.height - height) / 2;
+      this.userListWindow = window.open(
+        `/meeting/userlist/${this.meetingId}/`,
+        'UserList',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+      );
+    },
+
+    toggleAnnotation(message) {
+      if (message.showAnnotation) {
+        message.showAnnotation = false;
+      } else {
+        message.showAnnotation = true;
+        if (!message.annotation) {
+          this.fetchAnnotation(message);
+        }
+      }
+    },
+
+    async fetchAnnotation(message) {
+      try {
+        this.isLoading = true;
+        const response = await axios.get(`/api/meeting/${this.meetingId}/message/${message.id}/annotation/`);
+        console.log('Annotation response:', response.data);
+        message.annotation = response.data;
+      } catch (error) {
+        console.error("Failed to fetch annotation:", error);
+        message.annotation = { content: "アノテーションの取得に失敗しました" };
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async fetchKickVotes() {
+      try {
+        const response = await axios.get(`/api/meeting/${this.meetingId}/member/kick/`);
+        this.kickVotes = response.data;
+      } catch (error) {
+        console.error("Failed to fetch kick votes:", error);
+      }
+    },
+
+    isKicked(member) {
+      if (!member || !this.kickVotes) return false;
+      const memberVotes = this.kickVotes.find(vote => vote.member_id === member.id);
+      return memberVotes && memberVotes.is_kicked;
+    },
+
+    getRequiredVotes() {
+      return Math.ceil((this.meetingMemberList.length || 1) / 2);
+    },
+
+    getCurrentVotes(memberId) {
+      const memberVotes = this.kickVotes.find(vote => vote.member_id === memberId);
+      return memberVotes ? memberVotes.votes : 0;
+    },
+
+    async cancelKickVote(memberId) {
+      try {
+        await axios.delete(`/api/meeting/${this.meetingId}/member/kick/`, {
+          data: { member_id: memberId }
+        });
+        await this.fetchKickVotes();
+      } catch (error) {
+        console.error("Failed to cancel kick vote:", error);
+        alert("投票のキャンセルに失敗しました");
+      }
+    },
+  }
+});
+app.mount('#app');
+</script>
 </html>
