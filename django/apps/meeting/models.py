@@ -150,13 +150,13 @@ class MeetingMessageAnnotation(models.Model):
     suggestion = models.TextField(max_length=255, blank=True)
 
     # Fields
-    criticism = models.TextField(max_length=255, blank=True)
+    criticism = models.TextField(max_length=255, blank=True, default='')
 
     # Fields
     evaluation = models.TextField(max_length=255, blank=True)
 
     # Fields
-    warning = models.TextField(max_length=255, blank=True)
+    warning = models.TextField(max_length=255, blank=True, default='')
 
     class Meta:
 
@@ -173,7 +173,7 @@ class MeetingMessageAnnotation(models.Model):
         self.summary = nh3.clean_text(self.summary)
 
         # Sanitize suggestions
-        self.suggestions = nh3.clean_text(self.suggestions)
+        self.suggestion = nh3.clean_text(self.suggestion)
 
         # Sanitize criticism
         self.criticism = nh3.clean_text(self.criticism)
