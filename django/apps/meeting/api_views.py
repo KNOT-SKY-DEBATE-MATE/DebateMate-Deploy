@@ -1,5 +1,7 @@
 # apps/meeting/api_views.py
 import requests
+import logging
+
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.conf import settings
@@ -422,6 +424,8 @@ class MeetingMessageAnnotationAPIView(APIView):
 
                 # Return meeting
                 return Response(status=err.response.status_code)
+
+            logging.error(response.json())
             
             # Validate data
             serializer = MeetingMessageAnnotationSerializer(data=response.json())
