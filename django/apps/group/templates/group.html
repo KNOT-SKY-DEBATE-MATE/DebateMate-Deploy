@@ -57,7 +57,7 @@
     <div class="d-flex flex-column p-3 gap-3 bg-white shadow-sm border-end" style="width: 300px;">
       <!-- Group Header -->
       <div class="d-flex align-items-center gap-3 pb-3 border-bottom">
-        <img src="https://placehold.jp/50x50.png" alt="Group Icon" class="rounded-circle shadow-sm" width="50" height="50">
+        <img src="https://api.dicebear.com/6.x/identicon/png?seed=group:{{ group.id }}&size=128" alt="Group Icon" class="rounded-circle shadow-sm" width="50" height="50">
         <h5 class="text-truncate mb-0 fw-bold">{{ group.name }}</h5>
       </div>
 
@@ -91,7 +91,7 @@
           </button>
         </div>
         <div class="d-flex align-items-center gap-3 p-2 rounded bg-light">
-          <img src="https://placehold.jp/40x40.png" alt="User Icon" class="rounded-circle shadow-sm" width="40" height="40">
+          <img src="https://api.dicebear.com/6.x/identicon/png?seed=user:{{ user.id }}&size=128" alt="User Icon" class="rounded-circle shadow-sm" width="40" height="40">
           <div class="flex-grow-1 me-3"> <!-- me-3を追加して右側にマージンを確保 -->
             <h6 class="mb-0 text-truncate" style="max-width: 180px;">{{ user.username }}</h6>
           </div>
@@ -106,7 +106,7 @@
         <div class="flex-grow-1 d-flex flex-column justify-content-end gap-3">
           <div v-for="groupMessage in groupMessageList" :key="groupMessage.id" 
                class="d-flex align-items-start gap-3">
-            <img :src="'https://placehold.jp/40x40.png'" alt="Avatar" 
+            <img src="https://api.dicebear.com/6.x/identicon/png?seed=user:{{ user.id }}&size=128" alt="Avatar" 
                  class="rounded-circle shadow-sm" width="40" height="40">
             <div class="card border-0 shadow-sm w-75">
               <div class="card-body py-2 px-3">
@@ -143,9 +143,9 @@
         <div class="d-flex flex-column gap-3">
           <div v-for="groupMember in groupMemberList" :key="groupMember.id" 
                class="d-flex align-items-center gap-2">
-            <img src="https://placehold.jp/40x40.png" alt="Member Icon" 
+            <img :src="`https://api.dicebear.com/6.x/identicon/png?seed=user:${groupMember.id}&size=128`" alt="Member Icon" 
                  class="rounded-circle shadow-sm" width="40" height="40">
-            <h6 class="mb-0 text-truncate">[[ groupMember.user.username ]]</h6>
+            <h6 class="mb-0 text-truncate">[[ groupMember.nickname ]]</h6>
           </div>
         </div>
       </div>
@@ -184,12 +184,11 @@
               </form>
             </div>
             <div class="d-flex flex-column gap-1">
-              <div v-for="groupInvitable in groupInvitableList" :key="groupInvitable.id"
-                class="d-flex align-items-center gap-3">
+              <div v-for="groupInvitable in groupInvitableList" :key="groupInvitable.id" class="d-flex align-items-center gap-3">
                 <div class="d-flex justify-content-between w-100">
                   <div class="d-flex align-items-center gap-2">
-                    <img :src="'https://placehold.jp/40x40.png'" alt="Avatar" class="rounded-circle" width="40"
-                      height="40">
+                    <img :src="`https://api.dicebear.com/6.x/identicon/png?seed=user:${groupInvitable.id}&size=128`" alt="Avatar" class="rounded-circle"
+                      width="40" height="40">
                     <h6>[[ groupInvitable.username ]]</h6>
                   </div>
                   <button class="btn btn-primary text-nowrap btn-sm d-flex justify-content-center align-items-center"
