@@ -92,7 +92,7 @@
         <div class="d-flex align-items-center gap-3 mb-3 p-2 rounded bg-light">
           <img src="https://placehold.jp/40x40.png" alt="User Icon" class="rounded-circle shadow-sm" width="40" height="40">
           <div class="flex-grow-1">
-            <h6 class="mb-0 fw-semibold">[[ message.sender.nickname ]]</h6>
+            <h6 class="mb-0 fw-semibold">[[ user.username ]]</h6>
             <small class="text-muted">オンライン</small>
           </div>
         </div>
@@ -138,27 +138,28 @@
             <div class="card border-0 shadow-sm w-75">
               <div class="card-body p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                  <h6 class="mb-0 fw-bold">[[ user.username]]</h6>
+                  <h6 class="mb-0 fw-bold">[[ user.username ]]</h6>
                   <small class="text-muted">[[ message.created_at ]]</small>
                 </div>
                 <p class="mb-2">[[ message.content ]]</p>
                 
-                <!-- アノテーション切り替えボタン -->
-                <div class="mt-2 d-flex align-items-center gap-2">
-                  <button class="btn p-0 text-info d-flex align-items-center gap-1" @click="toggleAnnotation(message)">
-                    <i class="material-icons" style="font-size: 18px;">
-                      [[ message.showAnnotation ? 'expand_less' : 'expand_more' ]]
-                    </i>
-                    <span class="small">
-                      [[ message.showAnnotation ? '非表示' : 'AIによる分析' ]]
-                    </span>
-                  </button>
-
-                  <!-- 警告マーク -->
-                  <i v-if="message.annotation?.warning" 
-                  class="material-icons text-danger" 
-                  style="font-size: 16px;"
-                  title="警告があります">warning</i>
+                <!-- アノテーション切り替えボタンとアイコン -->
+                <div class="mt-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <button class="btn p-0 text-info d-flex align-items-center gap-1" @click="toggleAnnotation(message)">
+                      <i class="material-icons" style="font-size: 18px;">
+                        [[ message.showAnnotation ? 'expand_less' : 'expand_more' ]]
+                      </i>
+                      <span class="small">
+                        [[ message.showAnnotation ? '非表示' : 'AIによる分析' ]]
+                      </span>
+                    </button>
+                    <!-- 警告マーク -->
+                    <i v-if="message.annotation?.warning" 
+                       class="material-icons text-danger" 
+                       style="font-size: 16px;"
+                       title="警告があります">warning</i>
+                  </div>
     
                   <!-- アノテーションコンテンツ -->
                   <transition name="slide-fade">
@@ -201,6 +202,7 @@
           </div>
         </div>
       </div>
+    
       
       <!-- Message Input -->
       <div class="p-3 bg-light border-top">
