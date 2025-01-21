@@ -4,56 +4,53 @@ import vosk
 import json
 
 from fastapi import FastAPI
-from fastapi.websockets import (
-    WebSocket,
-    WebSocketDisconnect,
-)
+from fastapi.websockets import WebSocket, WebSocketDisconnect
 
-# Get logger
+# ロガーの取得
 logger = logging.getLogger(__name__)
 
-# Vosk model object
+# Vosk モデルの初期化
 model = vosk.Model(model_path='vosk-model-small-ja-0.22')
 
-# Fast API application
+# FastAPI アプリケーションの作成
 application = FastAPI()
 
-
-@application.websocket("ws-voice/{voice_id}/")
+@application.websocket("/ws-voice/{voice_id}/")
 async def onconnect(websocket: WebSocket, voice_id: uuid.UUID):
-    
-    # Awaiting connection
     await websocket.accept()
-
-    # Recognizer
     recognizer = vosk.KaldiRecognizer(model, 16000)
     
     try:
-        # Mainloop
         while True:
-            
-            # Get audio chunk-stream
             data = await websocket.receive_bytes()
 
             if recognizer.AcceptWaveform(data):
-
-                # Case where voice-message is not completed
                 result = recognizer.Result()
                 result_dict = json.loads(result)
                 
-                # Check key of result dict
                 if "text" in result_dict:
-                    await websocket.send_text({"text": result_dict["text"], "is_completed": True})
-                    await websocket.close()
-
+                    await websocket.send_text(
+                        json.dumps({
+                            "text": result_dict["text"],
+                            "is_completed": True,
+                        })
+                    )
+                    # 接続終了の呼び出しはここでは行わない
             else:
-                # Case where voice-message is not partial
                 partial = recognizer.PartialResult()
                 partial_dict = json.loads(partial)
 
-                # Check key of partial result dict
                 if "partial" in partial_dict:
-                    await websocket.send_text({"text": partial_dict["partial"], "is_completed": False})
-    
+                    await websocket.send_text(
+                        json.dumps({
+                            "text": partial_dict["partial"],
+                            "is_completed": False,
+                        })
+                    )
     except WebSocketDisconnect:
-        ...
+        logger.info("WebSocket disconnected")
+    except Exception as e:
+        logger.error(f"Error: {e}")
+    finally:
+        # 最終的に接続を閉じる
+        await websocket.close()
