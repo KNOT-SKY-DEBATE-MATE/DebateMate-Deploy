@@ -144,7 +144,7 @@ class MeetingMessageAnnotation(models.Model):
     summary = models.TextField(max_length=255, blank=True)
 
     # Fields
-    suggestions = models.TextField(max_length=255, blank=True)
+    suggestion = models.TextField(max_length=255, blank=True)
 
     # Fields
     criticism = models.TextField(max_length=255, blank=True)
