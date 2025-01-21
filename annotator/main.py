@@ -130,7 +130,7 @@ async def onannotate(body: Request = Body(...)):
         )
 
         # Parse response
-        return Response(**response["choices"][0]["message"]["content"])
+        return Response(**response.choices[0].message.function_call.arguments)
 
     except Exception as e:
 
