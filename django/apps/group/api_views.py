@@ -270,8 +270,7 @@ class GroupMemberOneAPIView(APIView):
             return Response(status=403)
 
         # Check if user is a member of any group
-        group_member = get_object_or_404(
-            GroupMember, id=member_id, group=group)
+        group_member = get_object_or_404(GroupMember, id=member_id, group=group)
 
         # Validate data
         out_serializer = self.GetOutSerializer(group_member)
