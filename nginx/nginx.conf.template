@@ -7,7 +7,7 @@ http {
 
 
          location /static/ {
-            alias /${COMPOSE_PROJECT_NAME}/django/staticfiles/;
+            alias /app/staticfiles/;
             autoindex on;
         }
 
