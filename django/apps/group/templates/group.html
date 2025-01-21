@@ -11,6 +11,46 @@
   <script src="https://cdn.jsdelivr.net/npm/vue@3.0.0/dist/vue.global.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    .btn-info {
+      background-color: #22b9aafd !important; /* 背景色 */
+      border-color: #22b9aafd !important;     /* ボーダー色 */
+      color: #F5F5F5 !important;            /* テキスト色 */
+    }
+
+    /* ホバー時のスタイル */
+    .btn-info:hover {
+      background-color: #007BA7 !important;
+      border-color: #007BA7 !important;
+    }
+
+    /* disabled時のスタイル */
+    .btn-info:disabled {
+      background-color: #22b9aafd !important;
+      border-color: #007BA7 !important;
+      opacity: 0.65;
+    }
+
+    .btn--out-room{
+      background-color: #c44f3aee !important; /* 背景色 */
+      border-color: #c44f3aee !important;     /* ボーダー色 */
+      color: #F5F5F5 !important;            /* テキスト色 */
+    }
+
+    /* ホバー時のスタイル */
+    .btn--out-room:hover {
+      background-color: #b11b00fd !important;
+      border-color: #b11b00fd !important;
+    }
+
+    /* disabled時のスタイル */
+    .btn--out-room:disabled {
+      background-color: #22b9aafd !important;
+      border-color: #007BA7 !important;
+      opacity: 0.65;
+    }
+
+  </style>
 </head>
 
 <body class="vh-100 bg-light">
@@ -41,16 +81,23 @@
       </div>
 
       <!-- User Profile Section -->
-      <div class="d-flex align-items-center gap-3 pt-3 border-top mt-auto">
-        <img src="https://placehold.jp/40x40.png" alt="User Icon" class="rounded-circle shadow-sm" width="40" height="40">
-        <div class="flex-grow-1">
-          <h6 class="mb-0 text-truncate">{{ user.username }}</h6>
+      <div class="mt-auto align-items-center gap-2 pt-2 border-top mt-auto">
+        <div class="d-flex gap-2 mb-2 justify-content-end"> <!-- justify-content-endを追加 -->
+          <button class="btn btn--out-room d-flex align-items-center gap-2 shadow-sm"
+                  @click="exitToGroup" style="height: 38px;"> <!-- heightを設定 -->
+            <i class="material-icons">logout</i>
+          </button>
+          <button class="btn btn-info shadow-sm d-flex justify-content-center align-items-center" 
+                  style="height: 38px; width: 38px;"> <!-- heightとwidthを設定 -->
+            <i class="material-icons">settings</i>
+          </button>
         </div>
-        <button class="btn btn-outline-danger btn-sm d-flex align-items-center gap-2 shadow-sm"
-                @click="exitToGroup">
-          <i class="material-icons">logout</i>
-          <span>退出</span>
-        </button>
+        <div class="d-flex align-items-center gap-3 p-2 rounded bg-light">
+          <img src="https://placehold.jp/40x40.png" alt="User Icon" class="rounded-circle shadow-sm" width="40" height="40">
+          <div class="flex-grow-1 me-3"> <!-- me-3を追加して右側にマージンを確保 -->
+            <h6 class="mb-0 text-truncate" style="max-width: 180px;">{{ user.username }}</h6>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -80,8 +127,8 @@
       <div class="p-3  bg-light">
         <div class="d-flex gap-2">
           <input type="text" v-model="groupMessageCreateForm.content" 
-                 class="form-control shadow-sm" placeholder="メッセージを入力...">
-          <button class="btn btn-primary d-flex justify-content-center align-items-center shadow-sm" 
+                 class="form-control shadow-sm p-2" placeholder="メッセージを入力...">
+          <button class="btn btn-info d-flex justify-content-center align-items-center shadow-sm" 
                   @click="onCreateMessage" :disabled="isLoading">
             <i class="material-icons">send</i>
           </button>
@@ -107,7 +154,7 @@
 
       <!-- Invite Button -->
       <div class="pt-3 border-top">
-        <button class="btn btn-primary btn-sm w-100 d-flex justify-content-center align-items-center gap-2 shadow-sm"
+        <button class="btn btn-info btn-sm w-100 d-flex justify-content-center align-items-center gap-2 shadow-sm p-2"
                 @click="groupInviteFormIsOpen = true">
           <i class="material-icons">person_add</i>
           <span>メンバーを招待</span>
@@ -183,9 +230,9 @@
                   v-model="groupMeetingCreateForm.description"></textarea>
               </div>
               <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-secondary"
+                <button type="button" class="btn btn-info"
                   @click="groupMeetingCreateFormIsOpen = false">キャンセル</button>
-                <button type="submit" class="btn btn-primary d-flex align-items-center gap-2" :disabled="isLoading">
+                <button type="submit" class="btn btn-info d-flex align-items-center gap-2" :disabled="isLoading">
                   <i class="material-icons">add_comment</i>作成
                 </button>
               </div>

@@ -1,5 +1,4 @@
 <!-- apps/meeting/templates/meeting.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,20 +12,55 @@
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <style>
-    /* btn-outline-secondary カスタマイズ */
-    .btn-outline-secondary {
-      border-color: #ba0000 !important;
-      /* ボーダーの色 */
-      color: #ba0000 !important;
-      /* テキストの色 */
+    .btn-info {
+      background-color: #22b9aafd !important;
+      border-color: #22b9aafd !important;
+      color: #F5F5F5 !important;
     }
 
-    /* ホバー時の色変更 */
-    .btn-outline-secondary:hover {
-      background-color: #ba0000 !important;
-      /* 背景色 */
-      color: #ffffff !important;
-      /* テキストの色 */
+    .btn-info:hover {
+      background-color: #007BA7 !important;
+      border-color: #007BA7 !important;
+    }
+
+    .btn-info:disabled {
+      background-color: #22b9aafd !important;
+      border-color: #007BA7 !important;
+      opacity: 0.65;
+    }
+
+    .btn--out-room {
+      background-color: #c44f3aee !important;
+      border-color: #c44f3aee !important;
+      color: #F5F5F5 !important;
+    }
+
+    .btn--out-room:hover {
+      background-color: #b11b00fd !important;
+      border-color: #b11b00fd !important;
+    }
+
+    .btn--out-room:disabled {
+      background-color: #22b9aafd !important;
+      border-color: #007BA7 !important;
+      opacity: 0.65;
+    }
+
+    .text-info {
+      background-color: #ffffff !important;
+      border-color: #ffffff !important;
+      color: #22b9aafd !important;
+    }
+
+    .text-info:hover {
+      background-color: #ffffff !important;
+      border-color: #007BA7 !important;
+    }
+
+    .text-info:disabled {
+      background-color: #22b9aafd !important;
+      border-color: #007BA7 !important;
+      opacity: 0.65;
     }
   </style>
 </head>
@@ -37,7 +71,7 @@
     <div class="d-flex flex-column p-3 gap-3 bg-white shadow-sm" style="width: 300px;">
       <!-- Meeting Title -->
       <div class="d-flex align-items-center gap-2 pb-3 border-bottom">
-        <i class="material-icons text-primary">video_camera_front</i>
+        <i class="material-icons text-info">video_camera_front</i>
         <h5 class="text-truncate mb-0 fw-bold">[[ meetingData.name ]]</h5>
       </div>
 
@@ -82,13 +116,13 @@
 
         <!-- Navigation Buttons -->
         <div class="d-flex gap-2 mb-3">
-          <button class="btn btn-outline-danger d-flex justify-content-center align-items-center gap-2 shadow-sm flex-grow-1"
-                  @click="exitToGroup">
+          <button class="btn btn--out-room d-flex justify-content-center align-items-center gap-2 shadow-sm flex-grow-1"
+            @click="exitToGroup">
             <i class="material-icons">logout</i>
             <span>退出</span>
           </button>
           <button class="btn btn-info text-white d-flex justify-content-center align-items-center gap-2 shadow-sm flex-grow-1"
-                  @click="openUserListWindow">
+            @click="openUserListWindow">
             <i class="material-icons">open_in_new</i>
             <span>別窓</span>
           </button>
@@ -96,16 +130,16 @@
 
         <!-- Media Controls -->
         <div class="d-flex gap-2">
-          <button class="btn btn-light shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2">
+          <button class="btn btn-info shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2">
             <i class="material-icons">mic_off</i>
           </button>
-          <button class="btn btn-light shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2">
+          <button class="btn btn-info shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2">
             <i class="material-icons">videocam_off</i>
           </button>
-          <button class="btn btn-light shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2">
+          <button class="btn btn-info shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2">
             <i class="material-icons">screen_share</i>
           </button>
-          <button class="btn btn-light shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2">
+          <button class="btn btn-info shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2">
             <i class="material-icons">settings</i>
           </button>
         </div>
@@ -135,15 +169,19 @@
           </div>
         </div>
       </div>
-      <!-- Input Section -->
-      <div class="d-flex align-items-center gap-2 p-3 border-top">
-        <input type="text" v-model="meetingMessageCreateForm.content" class="form-control" placeholder="メッセージを入力...">
-        <button class="btn btn-primary d-flex justify-content-center align-items-center" @click="onCreateMessage"
-          :disabled="isLoading">
-          <i class="material-icons">send</i>
-        </button>
+      <!-- Message Input -->
+      <div class="p-3 bg-light border-top">
+        <div class="d-flex gap-2">
+          <input type="text" v-model="meetingMessageCreateForm.content" class="form-control shadow-sm p-2"
+            placeholder="メッセージを入力...">
+          <button class="btn btn-info d-flex justify-content-center align-items-center shadow-sm px-3"
+            @click="onCreateMessage" :disabled="isLoading">
+            <i class="material-icons">send</i>
+          </button>
+        </div>
       </div>
     </div>
+    
 
     <!-- Right Sidebar -->
     <div class="d-flex flex-column p-3 gap-3 bg-white shadow-sm" style="width: 240px;">
@@ -153,7 +191,7 @@
       <div class="card border-0 shadow-sm">
         <div class="card-body">
           <div class="d-flex align-items-center gap-2 mb-3">
-            <i class="material-icons text-primary">record_voice_over</i>
+            <i class="material-icons text-info">record_voice_over</i>
             <span class="fw-semibold">音声認識状態</span>
           </div>
           <div class="form-check form-switch">
@@ -163,11 +201,12 @@
         </div>
       </div>
 
+
       <!-- Meeting Topic -->
       <div class="card border-0 shadow-sm">
         <div class="card-body">
           <div class="d-flex align-items-center gap-2 mb-2">
-            <i class="material-icons text-primary">topic</i>
+            <i class="material-icons text-info">topic</i>
             <span class="fw-semibold">議題</span>
           </div>
           <p class="mb-0 small">[[ description ]]</p>
@@ -175,47 +214,76 @@
       </div>
     </div>
 
-    <!-- User List Modal Window -->
-    <div v-if="userListWindowOpen" class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
-      <div class="modal-dialog modal-dialog-centered modal-lg">
+
+    <!-- 投票モーダル -->
+    <div v-if="showVoteModal" class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5)">
+      <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">参加者一覧</h5>
-            <button class="btn-close" @click="userListWindowOpen = false"></button>
+            <h5 class="modal-title">キック判定への投票</h5>
+            <button type="button" class="btn-close" @click="showVoteModal = false"></button>
           </div>
           <div class="modal-body">
-            <div class="row g-3">
-              <div class="col-md-6" v-for="member in meetingMemberList" :key="member.id">
-                <div class="card">
-                  <div class="bg-secondary rounded" style="aspect-ratio: 16/9;">
-                    <div class="w-100 h-100 d-flex justify-content-center align-items-center text-white">
-                      CAM [[ member.nickname ]]
-                    </div>
+            <div class="text-center mb-3">
+              <p class="mb-1">[[selectedMember?.nickname]] さんのキック判定について投票してください</p>
+              <small class="text-muted">投票内容は後から変更できません</small>
+            </div>
+            <div class="d-flex justify-content-center gap-3">
+              <button class="btn btn-success" @click="submitVote(true)">
+                <i class="material-icons me-1">thumb_up</i>
+                復帰に賛成
+              </button>
+              <button class="btn btn-outline-danger" @click="submitVote(false)">
+                <i class="material-icons me-1">thumb_down</i>
+                キックに賛成
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  <!-- User List Modal Window -->
+  <div v-if="userListWindowOpen" class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">参加者一覧</h5>
+          <button class="btn-close" @click="userListWindowOpen = false"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6" v-for="member in meetingMemberList" :key="member.id">
+              <div class="card">
+                <div class="bg-secondary rounded" style="aspect-ratio: 16/9;">
+                  <div class="w-100 h-100 d-flex justify-content-center align-items-center text-white">
+                    CAM [[ member.nickname ]]
                   </div>
-                  <div class="card-body py-2 px-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                      <div class="d-flex align-items-center gap-2">
-                        <img src="https://placehold.jp/30x30.png" alt="Member Icon" class="rounded-circle" width="30"
-                          height="30">
-                        <span class="text-truncate">[[ member.nickname ]]</span>
-                      </div>
-                      <div class="d-flex gap-1">
-                        <i class="material-icons" v-if="member.isMuted">mic_off</i>
-                        <i class="material-icons" v-if="member.isVideoOff">videocam_off</i>
-                      </div>
+                </div>
+                <div class="card-body py-2 px-3">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                      <img src="https://placehold.jp/30x30.png" alt="Member Icon" class="rounded-circle" width="30"
+                        height="30">
+                      <span class="text-truncate">[[ member.nickname ]]</span>
+                    </div>
+                    <div class="d-flex gap-1">
+                      <i class="material-icons" v-if="member.isMuted">mic_off</i>
+                      <i class="material-icons" v-if="member.isVideoOff">videocam_off</i>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" @click="userListWindowOpen = false">閉じる</button>
-          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="userListWindowOpen = false">閉じる</button>
         </div>
       </div>
     </div>
-
+  </div>
   </div>
 
   <script>
