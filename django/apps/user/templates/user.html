@@ -16,20 +16,17 @@
       color: #F5F5F5 !important;
       /* テキスト色 */
     }
-
     /* ホバー時のスタイル */
     .btn-info:hover {
       background-color: #007BA7 !important;
       border-color: #007BA7 !important;
     }
-
     /* disabled時のスタイル */
     .btn-info:disabled {
       background-color: #22b9aafd !important;
       border-color: #007BA7 !important;
       opacity: 0.65;
     }
-
     .btn--out-room {
       background-color: #c44f3aee !important;
       /* 背景色 */
@@ -38,13 +35,11 @@
       color: #F5F5F5 !important;
       /* テキスト色 */
     }
-
     /* ホバー時のスタイル */
     .btn--out-room:hover {
       background-color: #b11b00fd !important;
       border-color: #b11b00fd !important;
     }
-
     /* disabled時のスタイル */
     .btn--out-room:disabled {
       background-color: #22b9aafd !important;
@@ -64,7 +59,6 @@
             height="40">
           <h6 class="mb-0 fw-bold">{{ user.username }}</h6>
         </div>
-
         <!-- 右側のボタングループ -->
         <div class="d-flex align-items-center gap-3 ms-auto">
           <button class="btn btn-info text-white rounded d-flex align-items-center gap-2 px-4" type="button"
@@ -161,7 +155,7 @@
       async created() {
         try {
           this.user = (await axios.get("/api/user/")).data;
-          this.userGroupList = (await axios.get("/api/user/group")).data;
+          this.userGroupList = (await axios.get("/api/user/group/")).data;
         } catch (error) {
           console.error(`ERROR: ${error.response.status} ${error.response.statusText}`);
           alert({
@@ -177,7 +171,7 @@
         this.websocket = WebSocket(`wss://${location.host}/ws/user/${this.user.id}/`);
         this.websocket.onmessage = async (event) => {
           if (event.data === "GROUP.JOIN") try {
-            this.userGroupList = (await axios.post("/api/user/group/")).data;
+            this.userGroupList = (await axios.get("/api/user/group/")).data;
           } catch (error) {
             if (error.response === undefined) {
               console.error("ERROR: Unknown error");
