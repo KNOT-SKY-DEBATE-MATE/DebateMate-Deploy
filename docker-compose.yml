@@ -70,6 +70,7 @@ services:
     volumes:
       - ./letsencrypt:/etc/letsencrypt
       - ./www:/var/www/html
+      - ./staticfiles:/$COMPOSE_PROJECT_NAME/django/staticfiles
 
 volumes:
   certbot-data:
