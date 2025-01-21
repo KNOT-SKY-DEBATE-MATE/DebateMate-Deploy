@@ -31,12 +31,12 @@ urlpatterns = [
         name='api.meeting.(id).message',
     ),
     path(
-        route='<uuid:meeting_id>/message/<int:message_id>/',
+        route='<uuid:meeting_id>/message/<uuid:message_id>/',
         view=MeetingMessageOneAPIView.as_view(),
         name='api.meeting.(id).message.(id)',
     ),
     path(
-        route='<uuid:meeting_id>/message/<int:message_id>/annotation/',
+        route='<uuid:meeting_id>/message/<uuid:message_id>/annotation/',
         view=MeetingMessageAnnotationAPIView.as_view(),
         name='api.meeting.(id).message.(id).annotation',
     ),
