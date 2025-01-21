@@ -1,0 +1,372 @@
+<!--apps/group/templates/group.html-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DebateMate</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.0.0/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body class="vh-100 bg-light">
+  <div id="app" class="d-flex h-100">
+    <!-- Left Sidebar -->
+    <div class="d-flex flex-column p-3 gap-3 bg-white shadow-sm border-end" style="width: 300px;">
+      <!-- Group Header -->
+      <div class="d-flex align-items-center gap-3 pb-3 border-bottom">
+        <img src="https://placehold.jp/50x50.png" alt="Group Icon" class="rounded-circle shadow-sm" width="50" height="50">
+        <h5 class="text-truncate mb-0 fw-bold">{{ group.name }}</h5>
+      </div>
+
+      <!-- Meeting Section -->
+      <div class="flex-grow-1 d-flex flex-column gap-3 overflow-hidden">
+        <button class="btn btn-info d-flex justify-content-center align-items-center gap-2 shadow-sm"
+          :disabled="isLoading" @click="groupMeetingCreateFormIsOpen = true">
+          <i class="material-icons">add_comment</i>
+          <span>新しいミーティング</span>
+        </button>
+
+        <!-- Meeting List -->
+        <div class="flex-grow-1 overflow-auto">
+          <div v-for="groupMeeting in groupMeetingList" :key="groupMeeting.id" class="card mb-2 cursor-pointer"
+            @click="onMoveToMeeting(groupMeeting)">
+            <div class="card-body">[[ groupMeeting.title ]]</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Profile Section -->
+      <div class="d-flex align-items-center gap-3 pt-3 border-top mt-auto">
+        <img src="https://placehold.jp/40x40.png" alt="User Icon" class="rounded-circle shadow-sm" width="40" height="40">
+        <div class="flex-grow-1">
+          <h6 class="mb-0 text-truncate">{{ user.username }}</h6>
+        </div>
+        <button class="btn btn-outline-danger btn-sm d-flex align-items-center gap-2 shadow-sm"
+                @click="exitToGroup">
+          <i class="material-icons">logout</i>
+          <span>退出</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Chat Section -->
+    <div class="d-flex flex-column flex-grow-1 bg-light">
+      <!-- Message List -->
+      <div id="message-list" class="flex-grow-1 d-flex flex-column overflow-auto p-4">
+        <div class="flex-grow-1 d-flex flex-column justify-content-end gap-3">
+          <div v-for="groupMessage in groupMessageList" :key="groupMessage.id" 
+               class="d-flex align-items-start gap-3">
+            <img :src="'https://placehold.jp/40x40.png'" alt="Avatar" 
+                 class="rounded-circle shadow-sm" width="40" height="40">
+            <div class="card border-0 shadow-sm w-75">
+              <div class="card-body py-2 px-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <h6 class="mb-0 fw-bold">[[ groupMessage.sender.nickname ]]</h6>
+                  <small class="text-muted">[[ groupMessage.created_at ]]</small>
+                </div>
+                <p class="mb-0">[[ groupMessage.content ]]</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message Input -->
+      <div class="p-3  bg-light">
+        <div class="d-flex gap-2">
+          <input type="text" v-model="groupMessageCreateForm.content" 
+                 class="form-control shadow-sm" placeholder="メッセージを入力...">
+          <button class="btn btn-primary d-flex justify-content-center align-items-center shadow-sm" 
+                  @click="onCreateMessage" :disabled="isLoading">
+            <i class="material-icons">send</i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="d-flex flex-column p-3 gap-3 bg-white shadow-sm border-start" style="width: 240px;">
+      <h5 class="fw-bold mb-0">メンバーリスト</h5>
+      
+      <!-- Member List -->
+      <div class="flex-grow-1 overflow-auto">
+        <div class="d-flex flex-column gap-3">
+          <div v-for="groupMember in groupMemberList" :key="groupMember.id" 
+               class="d-flex align-items-center gap-2">
+            <img src="https://placehold.jp/40x40.png" alt="Member Icon" 
+                 class="rounded-circle shadow-sm" width="40" height="40">
+            <h6 class="mb-0 text-truncate">[[ groupMember.nickname ]]</h6>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invite Button -->
+      <div class="pt-3 border-top">
+        <button class="btn btn-primary btn-sm w-100 d-flex justify-content-center align-items-center gap-2 shadow-sm"
+                @click="groupInviteFormIsOpen = true">
+          <i class="material-icons">person_add</i>
+          <span>メンバーを招待</span>
+        </button>
+      </div>
+    </div>
+    <!-- User Invite Modal -->
+    <div class="modal-backdrop fade show" v-if="groupInviteFormIsOpen"></div>
+    <div class="modal fade" id="userInviteModal" tabindex="-1" aria-labelledby="userInviteModalLabel" aria-hidden="true"
+      :class="{'show d-block': groupInviteFormIsOpen}" role="dialog">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="userInviteModalLabel">メンバーを招待</h5>
+            <button class="btn-close" type="button" @click="groupInviteFormIsOpen = false"
+              :disabled="isLoading"></button>
+          </div>
+          <div class="modal-body">
+            <div class="d-flex flex-column gap-3">
+              <form @submit.prevent="onSearchToInvite">
+                <div class="mb-3 d-flex gap-2">
+                  <input type="text" class="form-control" id="query" v-model="groupInviteForm.query">
+                  <button type="submit"
+                    class="btn btn-primary text-nowrap btn-sm d-flex justify-content-center align-items-center"
+                    :disabled="isLoading">
+                    <i class="material-icons">search</i>検索
+                  </button>
+                </div>
+              </form>
+            </div>
+            <div class="d-flex flex-column gap-1">
+              <div v-for="groupInvitable in groupInvitableList" :key="groupInvitable.id"
+                class="d-flex align-items-center gap-3">
+                <div class="d-flex justify-content-between w-100">
+                  <div class="d-flex align-items-center gap-2">
+                    <img :src="'https://placehold.jp/40x40.png'" alt="Avatar" class="rounded-circle" width="40"
+                      height="40">
+                    <h6>[[ groupInvitable.username ]]</h6>
+                  </div>
+                  <button class="btn btn-primary text-nowrap btn-sm d-flex justify-content-center align-items-center"
+                    :disabled="isLoading" @click="onInvite(groupInvitable)">
+                    <i class="material-icons">person_add</i>招待
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新しいミーティング作成モーダル -->
+    <div class="modal-backdrop fade show" v-if="groupMeetingCreateFormIsOpen"></div>
+    <div class="modal fade" id="createMeetingModal" tabindex="-1" aria-labelledby="createMeetingModalLabel"
+      aria-hidden="true" :class="{'show d-block': groupMeetingCreateFormIsOpen}" role="dialog">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="createMeetingModalLabel">新しいミーティング</h5>
+            <button class="btn-close" type="button" @click="groupMeetingCreateFormIsOpen = false"
+              :disabled="isLoading"></button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="onCreateMeeting">
+              <div class="mb-3">
+                <label for="meeting-title" class="form-label">ミーティング名</label>
+                <input type="text" class="form-control" id="meeting-title" v-model="groupMeetingCreateForm.title"
+                  required>
+              </div>
+              <div class="mb-3">
+                <label for="meeting-description" class="form-label">説明</label>
+                <textarea class="form-control" id="meeting-description" rows="3"
+                  v-model="groupMeetingCreateForm.description"></textarea>
+              </div>
+              <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary"
+                  @click="groupMeetingCreateFormIsOpen = false">キャンセル</button>
+                <button type="submit" class="btn btn-primary d-flex align-items-center gap-2" :disabled="isLoading">
+                  <i class="material-icons">add_comment</i>作成
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const app = Vue.createApp({
+      delimiters: ['[[', ']]'],
+      data() {
+        return {
+          isLoading: false,
+          groupMessageList: [],
+          groupMessageCreateForm: {
+            content: "",
+          },
+          groupMeetingList: [],
+          groupMeetingCreateFormIsOpen: false,
+          groupMeetingCreateForm: {
+            title: "",      // 'name'から'title'に変更
+            description: "",
+            group: "{{ group.id }}",
+          },
+          groupMemberList: [],
+          groupInvitableList: [],
+          groupInviteFormIsOpen: false,
+          groupInviteForm: {
+            query: "",
+          },
+          websocket: null,
+        };
+      },
+      async created() {
+        if (this.isLoading) return;
+        try {
+          this.isLoading = true;
+          this.groupMemberList = (await axios.get("/api/group/{{ group.id }}/member/")).data;
+          this.groupMessageList = (await axios.get("/api/group/{{ group.id }}/message/")).data;
+          this.groupMeetingList = (await axios.get("/api/group/{{ group.id }}/meeting/")).data;
+          this.$nextTick(() => ((e) => { e.scrollTop = e.scrollHeight; })(document.getElementById('message-list')));
+        } catch (error) {
+          if (error.response == undefined) {
+            console.error("ERROR: Unknown error");
+          } else {
+            console.error(`ERROR: ${error.response.status} ${error.response.statusText}`);
+            alert({
+              404: "グループが見つかりません",
+              403: "権限がありません",
+              500: "予期せぬエラーが発生しました",
+            }[error.response.status] || "不明なエラーが発生しました。サイト管理者にお問い合わせください");
+          }
+        } finally {
+          this.isLoading = false;
+        }
+      },
+      mounted() {
+        axios.defaults.xsrfCookieName = "csrftoken";
+        axios.defaults.xsrfHeaderName = "X-CSRFToken";
+        axios.defaults.withCredentials = true;
+        this.websocket = new WebSocket(`wss://${window.location.hostname}/ws/group/{{ group.id }}/`);
+        this.websocket.onmessage = async (event) => {
+          if (event.data === "MESSAGE.CREATE") try {
+            this.groupMessageList = (await axios.get("/api/group/{{ group.id }}/message/")).data;
+            this.$nextTick(() => ((e) => { e.scrollTop = e.scrollHeight; })(document.getElementById('message-list')));
+          } catch (error) {
+            if (error.response === undefined) {
+              console.error("ERROR: Unknown error");
+            } else {
+              console.error(`ERROR: ${error.response.status} ${error.response.statusText}`);
+            }
+          }
+        };
+      },
+      methods: {
+        async onCreateMeeting() {
+          try {
+            this.isLoading = true;
+            await axios.get("/api/user/csrftoken/");
+            console.log(this.groupMeetingCreateForm);
+            this.groupMeetingList.push((await axios.post("/api/meeting/", this.groupMeetingCreateForm)).data);
+            this.groupMeetingCreateFormIsOpen = false;
+            this.groupMeetingCreateForm.title = '';
+            this.groupMeetingCreateForm.description = '';
+          } catch (error) {
+            if (error.response === undefined) {
+              console.error("ERROR: Unknown error");
+            } else {
+              console.error(`ERROR: ${error.response.status} ${error.response.statusText}`);
+              alert({
+                400: "ミーティング名が無効",
+                403: "権限がありません",
+                404: "グループが見つかりません",
+                500: "予期せぬエラーが発生しました",
+              }[error.response.status] || "不明なエラーが発生しました。サイト管理者にお問い合わせください");
+            }
+          } finally {
+            this.isLoading = false;
+          }
+        },
+        async onCreateMessage() {
+          try {
+            this.isLoading = true;
+            await axios.get("/api/user/csrftoken/");
+            this.groupMessageList.push((await axios.post("/api/group/{{ group.id }}/message/", this.groupMessageCreateForm)).data);
+            this.groupMessageCreateForm.content = "";
+            this.$nextTick(() => ((e) => { e.scrollTop = e.scrollHeight; })(document.getElementById('message-list')));
+          } catch (error) {
+            if (error.response == undefined) {
+              console.error("ERROR: Unknown error");
+            } else {
+              console.error(error);
+              alert({
+                400: "メッセージが既に送信されています",
+                403: "権限がありません",
+                404: "グループが見つかりません",
+                500: "予期せぬエラーが発生しました",
+              }[error.response.status] || "不明なエラーが発生しました。サイト管理者にお問い合わせください");
+            }
+          } finally {
+            this.isLoading = false;
+          }
+        },
+        async onSearchToInvite() {
+          try {
+            this.isLoading = true;
+            this.groupInvitableList = (await axios.get("/api/group/{{ group.id }}/member/invitable/", { params: this.groupInviteForm })).data;
+          } catch (error) {
+            if (error.response == undefined) {
+              console.error("ERROR: Unknown error");
+            } else {
+              console.error(`ERROR: ${error.response.status} ${error.response.statusText}`);
+              alert({
+                403: "権限がありません",
+                404: "ユーザーが見つかりません",
+                500: "予期せぬエラーが発生しました",
+              }[error.response.status] || "不明なエラーが発生しました。サイト管理者にお問い合わせください");
+            }
+          } finally {
+            this.isLoading = false;
+          }
+        },
+        async onInvite(user) {
+          try {
+            this.isLoading = true;
+            await axios.get("/api/user/csrftoken/");
+            this.groupMemberList.push((await axios.post("/api/group/{{ group.id }}/member/", {
+              user: user.id,
+              nickname: user.username,
+            })).data);
+            this.groupInvitableList = (await axios.get("/api/group/{{ group.id }}/member/invitable/", this.groupInviteForm)).data;
+          } catch (error) {
+            if (error.response === undefined) {
+              console.error("ERROR: Unknown error");
+            } else {
+              console.error(`ERROR: ${error.response.status} ${error.response.statusText}`);
+              alert({
+                400: "メンバーが既に招待されています",
+                403: "権限がありません",
+                404: "ユーザーが見つかりません",
+                500: "予期せぬエラーが発生しました",
+              }[error.response.status] || "不明なエラーが発生しました。サイト管理者にお問い合わせください");
+            }
+          } finally {
+            this.isLoading = false;
+          }
+        },
+        onMoveToMeeting(meeting) {
+          window.location.href = `/meeting/${meeting.id}/`;
+        },
+
+        exitToGroup() {
+          window.location.href = "/user/";
+        },
+      },
+    });
+    app.mount('#app');
+  </script>
+</body>
+
+</html>

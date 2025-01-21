@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DebateMate</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.0.0/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body>
+  <div id="app" class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-12 text-center mb-4">
+        <img src="https://placehold.jp/128x128.png" alt="ダミーアイコン" class="rounded-circle shadow">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12 col-md-6 col-lg-4 mx-auto">
+        <ul class="nav nav-tabs mb-4">
+          <li class="nav-item flex-grow-1 text-center">
+            <button class="nav-link w-100" type="button" :class="{'active': activeTab === 1}"
+              @click="activeTab = 1">認証</button>
+          </li>
+          <li class="nav-item flex-grow-1 text-center">
+            <button class="nav-link w-100" type="button" :class="{'active': activeTab === 2}"
+              @click="activeTab = 2">登録</button>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane fade" :class="{'show active': activeTab === 1}" id="tab1" role="tabpanel">
+            <form @submit.prevent="onSignin">
+              <div class="mb-3">
+                <label class="form-label" for="signin-username">ユーザー名</label>
+                <input class="form-control shadow-sm" id="signin-username" type="text" v-model="userSigninForm.username"
+                  required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="signin-password">パスワード</label>
+                <input class="form-control shadow-sm" id="signin-password" type="password"
+                  v-model="userSigninForm.password" required />
+              </div>
+              <button type="submit" class="btn btn-primary w-100" :disabled="isLoading">認証</button>
+            </form>
+          </div>
+          <div class="tab-pane fade" :class="{'show active': activeTab === 2}" id="tab2" role="tabpanel">
+            <form @submit.prevent="onSignup">
+              <div class="mb-3">
+                <label class="form-label" for="signup-username">ユーザー名</label>
+                <input class="form-control shadow-sm" id="signup-username" type="text"
+                  v-model="userSignupForm.username" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="signup-password">パスワード</label>
+                <input class="form-control shadow-sm" id="signup-password" type="password"
+                  v-model="userSignupForm.password" required />
+              </div>
+              <button type="submit" class="btn btn-primary w-100" :disabled="isLoading">登録</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-5 justify-content-center">
+      <div class="col-12 text-center">
+        <h5>または</h5>
+        <a href="" class="btn btn-outline-primary">
+          <i class="material-icons align-middle">google</i> Googleでログイン
+        </a>
+      </div>
+    </div>
+  </div>
+  <script>
+    const app = Vue.createApp({
+      data() {
+        return {
+          isLoading: false,
+          activeTab: 1,
+          userSigninForm: { username: '', password: '' },
+          userSignupForm: { username: '', password: '' },
+        };
+      },
+      mounted() {
+        axios.defaults.xsrfHeaderName = "X-CSRFToken";
+        axios.defaults.xsrfCookieName = "csrftoken";
+        axios.defaults.withCredentials = true;
+      },
+      methods: {
+        async onSignin() {
+          try {
+            this.isLoading = true;
+            await axios.get("/api/user/csrftoken/");
+            await axios.post("/api/user/signin/", this.userSigninForm);
+            window.location.href = "/user/";
+          } catch (error) {
+            console.error(`ERROR: ${error.response.status} ${error.response.statusText}`);
+            alert({
+              400: "ユーザーが既に登録されています",
+              403: "権限がありません",
+              404: "ユーザーが見つかりません",
+              401: "ユーザー名またはパスワードが間違っています",
+              500: "予期せぬエラーが発生しました",
+            }[error.response.status] || "不明なエラーが発生しました。サイト管理者にお問い合わせください");
+          } finally {
+            this.isLoading = false;
+          }
+        },
+        async onSignup() {
+          try {
+            this.isLoading = true;
+            await axios.get("/api/user/csrftoken/");
+            await axios.post("/api/user/signup/", this.userSignupForm);
+            window.location.href = "/user/";
+          } catch (error) {
+            console.error(`ERROR: ${error.response.status} ${error.response.statusText}`);
+            alert({
+              400: "ユーザーが既に登録されています",
+              403: "権限がありません",
+              404: "ユーザーが見つかりません",
+              500: "予期せぬエラーが発生しました",
+            }[error.response.status] || "不明なエラーが発生しました。サイト管理者にお問い合わせください");
+          } finally {
+            this.isLoading = false;
+          }
+        }
+      },
+    });
+    app.mount('#app');
+  </script>
+</body>
+
+</html>

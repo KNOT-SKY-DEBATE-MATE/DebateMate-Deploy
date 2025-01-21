@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DebateMate - ログイン</title>
+  {% load static %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body class="bg-light">
+  <div class="container py-4">
+    <div class="row justify-content-center">
+      <div class="col-md-5">
+        <div class="text-center mb-3">
+          <img src="https://placehold.jp/256x256.png" alt="ユーザーアイコン" class="rounded-circle border border-secondary"
+            width="80" height="80">
+        </div>
+        <div class="text-center mb-3">
+          <h1 class="fs-5">ログイン</h1>
+        </div>
+        <form method="POST" action="{% url 'account_login' %}">
+          {% csrf_token %}
+          <div class="mb-2">
+            <label for="login" class="form-label fs-6">メールアドレスまたはユーザー名</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text">
+                <span class="material-icons">person</span>
+              </span>
+              <input type="text" class="form-control shadow-sm" id="login" name="login" placeholder="メールアドレスまたはユーザー名を入力"
+                required>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label for="password" class="form-label fs-6">パスワード</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text">
+                <span class="material-icons">lock</span>
+              </span>
+              <input type="password" class="form-control shadow-sm" id="password" name="password" placeholder="パスワードを入力"
+                required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm w-100">ログイン</button>
+        </form>
+        <div class="text-center my-3">
+          <hr class="text-muted">
+          <span class="text-muted small">または</span>
+          <hr class="text-muted">
+        </div>
+        <div class="text-center mb-2">
+          <a href="{% url 'google_login' %}" class="d-block w-100 position-relative">
+            <img 
+              src="{% static 'images/google/svg/light/web_light_sq_ctn.svg' %}" 
+              alt="Sign in with Google" 
+              class="img-fluid transition-opacity">
+            <div class="position-absolute top-0 start-0 w-100 h-100 bg-opacity-25 bg-primary opacity-0 hover-opacity-100"></div>
+          </a>
+        </div>        
+        <div class="text-center mt-2">
+          <p class="fs-6">アカウントをお持ちでないですか？ <a href="{% url 'account_signup' %}">サインアップ</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

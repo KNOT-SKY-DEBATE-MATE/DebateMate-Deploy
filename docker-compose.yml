@@ -1,0 +1,74 @@
+version: "3.9"
+
+services:
+  redis:
+    build:
+      context: ./redis
+    container_name: redis
+    env_file:
+      - .env
+    expose:
+      - "${REDIS_INTERNAL_PORT}"
+
+  postgres:
+    build:
+      context: ./postgres
+    container_name: postgres
+    env_file:
+      - .env
+    expose:
+      - "${POSTGRES_INTERNAL_PORT}"
+
+  websocket:
+    build:
+      context: ./websocket
+    container_name: websocket
+    env_file:
+      - .env
+    expose:
+      - "${WEBSOCKET_INTERNAL_PORT}"
+
+  annotator:
+    build:
+      context: ./annotator
+    container_name: annotator
+    env_file:
+      - .env
+    expose:
+      - "${ANNOTATOR_INTERNAL_PORT}"
+
+  django:
+    build:
+      context: ./django
+    container_name: django
+    env_file:
+      - .env
+    expose:
+      - "${DJANGO_INTERNAL_PORT}"
+    depends_on:
+      - redis
+      - postgres
+      - websocket
+      - annotator
+
+  nginx:
+    build:
+      context: ./nginx
+    container_name: nginx
+    env_file:
+      - .env
+    ports:
+      - "${NGINX_EXTERNAL_HTTP_PORT}:${NGINX_INTERNAL_HTTP_PORT}"
+      - "${NGINX_EXTERNAL_HTTPS_PORT}:${NGINX_INTERNAL_HTTPS_PORT}"
+    depends_on:
+      - redis
+      - postgres
+      - websocket
+      - annotator
+      - django
+    volumes:
+      - ./letsencrypt:/etc/letsencrypt
+      - ./www:/var/www/html
+
+volumes:
+  certbot-data:

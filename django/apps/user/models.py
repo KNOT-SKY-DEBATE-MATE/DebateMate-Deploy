@@ -1,0 +1,3 @@
+"""
+Using default django auth user model...
+"""
