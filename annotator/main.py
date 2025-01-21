@@ -20,24 +20,6 @@ class Request(BaseModel):
     content: str
 
 
-class Response(BaseModel):
-
-    # Summary of talk
-    summary: str
-
-    # Suggestions of talk
-    suggestion: str
-
-    # Criticism of talk
-    criticism: str | None = None
-
-    # Evaluation of talk
-    evaluation: str
-
-    # Warning of talk
-    warning: str | None = None
-
-
 # Create FastAPI application
 application = FastAPI()
 
@@ -131,7 +113,7 @@ async def onannotate(body: Request = Body(...)):
         ).choices[0].message.function_call.arguments
 
         # Parse response and return
-        return Response(**json.loads(response))
+        return json.loads(response)
 
     except Exception as e:
 
