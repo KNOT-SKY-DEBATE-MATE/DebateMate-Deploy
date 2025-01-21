@@ -80,10 +80,10 @@ class UserSignupAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         # Chcek if user exists
-        try:
-            get_user_model().objects.get(username=serializer.validated_data['username'])
-        except get_user_model().DoesNotExist:
-            return Response(status=403)
+        if get_user_model().objects\
+                .filter(username=serializer.validated_data['username'])\
+                .exists():
+            return Response(status=400)
 
         # Check if user exists
         user = get_user_model().objects.create_user(**serializer.validated_data)
