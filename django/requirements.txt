@@ -6,8 +6,5 @@ django-redis
 djangorestframework
 djangorestframework-simplejwt
 psycopg2
-certbot
-certbot-nginx
 gunicorn
-cryptography
 requests

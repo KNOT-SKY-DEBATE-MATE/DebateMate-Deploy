@@ -50,19 +50,14 @@ class UserSigninAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         # Save user
-        user = authenticate(
-            request=request,
-            username=serializer.validated_data['username'],
-            password=serializer.validated_data['password'],
-            backend='django.contrib.auth.backends.ModelBackend'
-        )
+        user = authenticate(request=request, **serializer.validated_data)
 
         # Check if user exists
         if user is None:
             return Response(status=401)
 
         # Login user
-        login(request=request, user=user, backend='django.contrib.auth.backends.ModelBackend')
+        login(request=request, user=user)
 
         # Return token
         return Response(status=201)
@@ -98,7 +93,7 @@ class UserSignupAPIView(APIView):
         user = User.objects.create_user(**serializer.validated_data)
 
         # Login user
-        login(request=request, user=user, backend='django.contrib.auth.backends.ModelBackend')
+        login(request=request, user=user)
         
         # Return token
         return Response(status=201)

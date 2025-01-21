@@ -52,21 +52,20 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
     'apps.user',
     'apps.group',
     'apps.meeting',
 ]
 
 
-# Authentication
+# Redirects
+# https://docs.djangoproject.com/en/5.1/ref/settings/#login-redirect-url
+
 LOGIN_URL = '/user/authentication/'
 
-# https://docs.djangoproject.com/en/5.1/ref/settings/#login-redirect-url
 LOGIN_REDIRECT_URL = '/user/'
+
+LOGOUT_REDIRECT_URL = '/user/authentication/'
 
 
 # Rest framework
@@ -159,22 +158,15 @@ ASGI_APPLICATION = 'config.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': config('POSTGRES_DB'),
-#         'USER': config('POSTGRES_USER'),
-#         'PASSWORD': config('POSTGRES_PASSWORD'),
-#         'HOST': 'postgres',
-#         'PORT': config('POSTGRES_INTERNAL_PORT'),
-#         'CONN_MAX_AGE': 600,
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('POSTGRES_DB'),
+        'USER': config('POSTGRES_USER'),
+        'PASSWORD': config('POSTGRES_PASSWORD'),
+        'HOST': 'postgres',
+        'PORT': config('POSTGRES_INTERNAL_PORT'),
+        'CONN_MAX_AGE': 600,
     }
 }
 
@@ -190,46 +182,6 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
 ]
-
-
-# Authentication backends
-# https://docs.djangoproject.com/en/5.1/topics/auth/customizing/#specifying-authentication-backends
-
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
-]
-
-
-# Authentication
-# https://django-allauth.readthedocs.io/en/latest/configuration.html
-
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-
-ACCOUNT_EMAIL_REQUIRED = True
-
-ACCOUNT_USERNAME_REQUIRED = True
-
-
-# allauth SocialAccount providers
-# https://django-allauth.readthedocs.io/en/latest/configuration.html#socialaccount-providers
-
-# SOCIALACCOUNT_PROVIDERS = {
-#     'google': {
-#         'APP': {
-#             'client_id': config('DJANGO_GOOGLE_CLIENT_ID'),
-#             'secret': config('DJANGO_GOOGLE_CLIENT_SECRET'),
-#             'key': ''
-#         },
-#         'SCOPE': ['profile', 'email'],  # Googleから取得する情報
-#         'AUTH_PARAMS': {'access_type': 'offline'},
-#     }
-# }
-
-# Django contrib.sites
-# https://docs.djangoproject.com/en/5.1/ref/contrib/sites/
-
-SITE_ID = 1
 
 
 # Password validation
@@ -271,7 +223,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
 
@@ -284,26 +238,26 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Django Redis
 # https://django-redis.readthedocs.io/en/latest/
 
-# CACHE = {
-#     'default': {
-#         'BACKEND': 'django_redis.cache.RedisCache',
-#         'LOCATION': 'redis://{}:{}@redis:redis/{}'.format(
-#             config('REDIS_PASSWORD'),
-#             config('REDIS_INTERNAL_PORT'),
-#             config('REDIS_DB'),
-#         ),
-#         'OPTIONS': {
-#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-#         },
-#     }
-# }
+CACHE = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://{}:{}@redis:redis/{}'.format(
+            config('REDIS_PASSWORD'),
+            config('REDIS_INTERNAL_PORT'),
+            config('REDIS_DB'),
+        ),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+    }
+}
 
 
 # Websocket backend settings
 
-# WEBSOCKET_URL = 'http://websocket:{}/'.format(config('WEBSOCKET_INTERNAL_PORT'))
+WEBSOCKET_URL = 'http://websocket:{}/'.format(config('WEBSOCKET_INTERNAL_PORT'))
 
 
 # Annotator backend settings
 
-# ANNOTATOR_URL = 'http://annotator:{}/'.format(config('ANNOTATOR_INTERNAL_PORT'))
+ANNOTATOR_URL = 'http://annotator:{}/'.format(config('ANNOTATOR_INTERNAL_PORT'))
