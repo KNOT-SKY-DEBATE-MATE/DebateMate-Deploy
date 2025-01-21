@@ -113,6 +113,9 @@ async def onannotate(body: Request = Body(...)):
         ).choices[0].message.function_call.arguments
 
         # Log response
+        response = json.loads(response)
+
+        # Log response
         LOGGER.info(response.keys())
 
         # Parse response and return
