@@ -32,7 +32,6 @@ DEBUG = config('DJANGO_DEBUG', default=False, cast=bool)
 SECRET_KEY = config('DJANGO_SECRET_KEY')
 
 
-
 # Allowed Hosts
 # https://docs.djangoproject.com/en/5.1/ref/settings/#allowed-hosts
 
