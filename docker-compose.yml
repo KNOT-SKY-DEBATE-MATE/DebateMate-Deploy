@@ -36,6 +36,15 @@ services:
     expose:
       - "${ANNOTATOR_INTERNAL_PORT}"
 
+  voice:
+    build:
+      context: ./voice
+    container_name: voice
+    env_file:
+      - .env
+    expose:
+      - "${VOICE_INTERNAL_PORT}"
+
   django:
     build:
       context: ./django
