@@ -8,6 +8,7 @@ http {
 
          location /static/ {
             alias /${COMPOSE_PROJECT_NAME}/django/staticfiles/;
+            autoindex on;
         }
 
         location /.well-known/acme-challenge/ {
