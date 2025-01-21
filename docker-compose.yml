@@ -50,7 +50,7 @@ services:
       - websocket
       - annotator
     volumes:
-      - ./staticfiles:/$COMPOSE_PROJECT_NAME/django/staticfiles
+      - ./staticfiles:/django/staticfiles
 
   nginx:
     build:
@@ -70,7 +70,7 @@ services:
     volumes:
       - ./letsencrypt:/etc/letsencrypt
       - ./www:/var/www/html
-      - ./staticfiles:/$COMPOSE_PROJECT_NAME/django/staticfiles
+      - ./staticfiles:/django/staticfiles
 
 volumes:
   certbot-data:
