@@ -246,7 +246,6 @@ class MeetingMemberAPIView(APIView):
     
 
 class MeetingMemberKickAPIView(APIView):
-
     """
     Meeting Member Kick
     """
@@ -274,60 +273,60 @@ class MeetingMemberKickAPIView(APIView):
         
         return Response(kick_status)
 
-def post(self, request: Request, meeting_id):
-    """
-    Create or update kick vote
-    """
-    # Get meeting object
-    meeting = get_object_or_404(Meeting, id=meeting_id)
-    
-    # Authorize user as group-member
-    try:
-        meeting_member = MeetingMember.objects.get(user=request.user, meeting=meeting)
-    except MeetingMember.DoesNotExist:
-        return Response(status=403)
-    
-    # リクエストからターゲットメンバーIDを取得
-    target_member_id = request.data.get('member_id')
-    if not target_member_id:
-        return Response({'error': 'member_id is required'}, status=400)
+    def post(self, request: Request, meeting_id):
+        """
+        Create or update kick vote
+        """
+        # Get meeting object
+        meeting = get_object_or_404(Meeting, id=meeting_id)
+        
+        # Authorize user as group-member
+        try:
+            meeting_member = MeetingMember.objects.get(user=request.user, meeting=meeting)
+        except MeetingMember.DoesNotExist:
+            return Response(status=403)
+        
+        # リクエストからターゲットメンバーIDを取得
+        target_member_id = request.data.get('member_id')
+        if not target_member_id:
+            return Response({'error': 'member_id is required'}, status=400)
 
-    # Key of cache
-    votebox_key = f'meeting.kick.votes:{meeting.id}'
-    
-    # Cache get by key
-    votebox = cache.get(votebox_key, {})
-    
-    # 投票データの構造を初期化
-    if target_member_id not in votebox:
-        votebox[target_member_id] = {
-            'voters': [],
-            'is_kicked': False
-        }
-    
-    # 投票者を追加
-    voter_id = str(request.user.id)
-    if voter_id not in votebox[target_member_id]['voters']:
-        votebox[target_member_id]['voters'].append(voter_id)
+        # Key of cache
+        votebox_key = f'meeting.kick.votes:{meeting.id}'
+        
+        # Cache get by key
+        votebox = cache.get(votebox_key, {})
+        
+        # 投票データの構造を初期化
+        if target_member_id not in votebox:
+            votebox[target_member_id] = {
+                'voters': [],
+                'is_kicked': False
+            }
+        
+        # 投票者を追加
+        voter_id = str(request.user.id)
+        if voter_id not in votebox[target_member_id]['voters']:
+            votebox[target_member_id]['voters'].append(voter_id)
 
-    # 必要な投票数を計算（過半数）
-    member_count = MeetingMember.objects.filter(meeting=meeting).count()
-    required_votes = math.ceil(member_count / 2)
+        # 必要な投票数を計算（過半数）
+        member_count = MeetingMember.objects.filter(meeting=meeting).count()
+        required_votes = math.ceil(member_count / 2)
 
-    # キック状態の更新
-    current_votes = len(votebox[target_member_id]['voters'])
-    votebox[target_member_id]['is_kicked'] = current_votes >= required_votes
+        # キック状態の更新
+        current_votes = len(votebox[target_member_id]['voters'])
+        votebox[target_member_id]['is_kicked'] = current_votes >= required_votes
 
-    # Set votes with timeout (3 minutes)
-    cache.set(votebox_key, votebox, timeout=180)  # 3*60 seconds
+        # Set votes with timeout (3 minutes)
+        cache.set(votebox_key, votebox, timeout=180)  # 3*60 seconds
 
-    # Return response
-    return Response({
-        'success': True,
-        'current_votes': current_votes,
-        'required_votes': required_votes,
-        'is_kicked': votebox[target_member_id]['is_kicked']
-    })
+        # Return response
+        return Response({
+            'success': True,
+            'current_votes': current_votes,
+            'required_votes': required_votes,
+            'is_kicked': votebox[target_member_id]['is_kicked']
+        })
     
 
 class MeetingMessageAPIView(APIView):
@@ -527,3 +526,48 @@ class MeetingMessageAnnotationAPIView(APIView):
 
         # Return meeting
         return Response(out_serializer.data)
+    
+    def post(self, request: Request, meeting_id, message_id):
+    # 既存の処理は省略
+
+        # ポリシー違反を検出した場合
+        if serializer.validated_data['is_policy_violation']:
+            # 該当するミーティングメンバーを取得
+            member = MeetingMember.objects.get(meeting__id=meeting_id, user=message.sender)
+            
+            # 自動でキックする
+            member.is_kicked = True
+            member.save()
+
+            # キック投票を行う
+            self.create_kick_vote(meeting_id, member.id)
+
+        # 既存の処理は省略
+
+    def create_kick_vote(self, meeting_id, member_id):
+        # キャッシュキーを作成
+        votebox_key = f'meeting.kick.votes:{meeting_id}'
+        
+        # キャッシュからデータを取得
+        votebox = cache.get(votebox_key, {})
+        
+        # 投票データを初期化
+        if member_id not in votebox:
+            votebox[member_id] = {
+                'voters': [],
+                'is_kicked': False
+            }
+        
+        # 投票者を追加
+        votebox[member_id]['voters'].append(str(self.request.user.id))
+
+        # 必要な投票数を計算（過半数）
+        member_count = MeetingMember.objects.filter(meeting__id=meeting_id).count()
+        required_votes = math.ceil(member_count / 2)
+
+        # キック状態の更新
+        current_votes = len(votebox[member_id]['voters'])
+        votebox[member_id]['is_kicked'] = current_votes >= required_votes
+
+        # キャッシュに保存
+        cache.set(votebox_key, votebox, timeout=180)
