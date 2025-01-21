@@ -92,7 +92,7 @@ async def onannotate(body: Request = Body(...)):
 
     try:
         # Call OpenAI API
-        response = await client.chat.completions.create(
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {
