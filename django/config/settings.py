@@ -61,11 +61,11 @@ INSTALLED_APPS = [
 # Redirects
 # https://docs.djangoproject.com/en/5.1/ref/settings/#login-redirect-url
 
-LOGIN_URL = '/user/authentication/'
+LOGIN_URL = '/user/login/'
 
 LOGIN_REDIRECT_URL = '/user/'
 
-LOGOUT_REDIRECT_URL = '/user/authentication/'
+LOGOUT_REDIRECT_URL = '/user/logout/'
 
 
 # Rest framework
@@ -183,6 +183,11 @@ PASSWORD_HASHERS = [
 ]
 
 
+# User model
+
+AUTH_USER_MODEL = "user.User"
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -217,9 +222,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = '/var/www/django/staticfiles'
 
 STATICFILES_DIRS = [BASE_DIR / 'static']
 

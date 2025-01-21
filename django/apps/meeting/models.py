@@ -148,13 +148,13 @@ class MeetingMessageAnnotation(models.Model):
     suggestion = models.TextField(max_length=255, blank=True)
 
     # Fields
-    criticism = models.TextField(max_length=255, blank=True, null=True)
+    criticism = models.TextField(max_length=255, blank=True)
 
     # Fields
     evaluation = models.TextField(max_length=255, blank=True)
 
     # Fields
-    warning = models.TextField(max_length=255, blank=True, null=True)
+    warning = models.TextField(max_length=255, blank=True)
 
     class Meta:
 

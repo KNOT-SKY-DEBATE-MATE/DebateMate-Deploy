@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,36 +9,37 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <style>
     .btn-info {
-      background-color: #22b9aafd !important; /* 背景色 */
-      border-color: #22b9aafd !important;     /* ボーダー色 */
-      color: #F5F5F5 !important;            /* テキスト色 */
+      background-color: #22b9aafd !important;
+      /* 背景色 */
+      border-color: #22b9aafd !important;
+      /* ボーダー色 */
+      color: #F5F5F5 !important;
+      /* テキスト色 */
     }
-
     /* ホバー時のスタイル */
     .btn-info:hover {
       background-color: #007BA7 !important;
       border-color: #007BA7 !important;
     }
-
     /* disabled時のスタイル */
     .btn-info:disabled {
       background-color: #22b9aafd !important;
       border-color: #007BA7 !important;
       opacity: 0.65;
     }
-
-    .btn--out-room{
-      background-color: #c44f3aee !important; /* 背景色 */
-      border-color: #c44f3aee !important;     /* ボーダー色 */
-      color: #F5F5F5 !important;            /* テキスト色 */
+    .btn--out-room {
+      background-color: #c44f3aee !important;
+      /* 背景色 */
+      border-color: #c44f3aee !important;
+      /* ボーダー色 */
+      color: #F5F5F5 !important;
+      /* テキスト色 */
     }
-
     /* ホバー時のスタイル */
     .btn--out-room:hover {
       background-color: #b11b00fd !important;
       border-color: #b11b00fd !important;
     }
-    
     /* disabled時のスタイル */
     .btn--out-room:disabled {
       background-color: #22b9aafd !important;
@@ -53,18 +55,18 @@
       <div class="container py-2">
         <!-- 左側のユーザー情報 -->
         <div class="d-flex align-items-center gap-3">
-          <img class="rounded-circle shadow-sm" src="https://placehold.jp/40x40.png" alt="User Icon" width="40" height="40">
+          <img class="rounded-circle shadow-sm" src="https://placehold.jp/40x40.png" alt="User Icon" width="40"
+            height="40">
           <h6 class="mb-0 fw-bold">{{ user.username }}</h6>
         </div>
-        
         <!-- 右側のボタングループ -->
         <div class="d-flex align-items-center gap-3 ms-auto">
-          <button class="btn btn-info text-white rounded d-flex align-items-center gap-2 px-4" 
-                  type="button" @click="userGroupCreateFromIsOpen = true">
+          <button class="btn btn-info text-white rounded d-flex align-items-center gap-2 px-4" type="button"
+            @click="userGroupCreateFormIsOpen = true">
             <i class="material-icons">add_circle</i>
             <span>新しいグループ</span>
           </button>
-          <button class="btn btn--out-room rounded d-flex align-items-center gap-2 px-3" @click="exitToGroup">
+          <button class="btn btn--out-room rounded d-flex align-items-center gap-2 px-3" @click="onUserLogout">
             <i class="material-icons fs-5">logout</i>
             <span>ログアウト</span>
           </button>
@@ -79,15 +81,16 @@
           <div class="card h-100 border-0 shadow-sm rounded-4 transition-transform hover-translate-up">
             <div class="card-body p-4">
               <div class="d-flex gap-4 mb-4">
-                <img class="rounded-4 object-fit-cover shadow-sm" 
-                     :src="userGroup.icon" alt="Group Icon" width="100" height="100">
+                <img class="rounded-4 object-fit-cover shadow-sm" :src="userGroup.icon" alt="Group Icon" width="100"
+                  height="100">
                 <div class="d-flex flex-column justify-content-center">
                   <h5 class="card-title fw-bold mb-2">[[ userGroup.name ]]</h5>
                   <p class="card-text text-muted small">[[ userGroup.description ]]</p>
                 </div>
               </div>
-              <button class="btn btn-info text-white w-100 rounded-3 d-flex align-items-center justify-content-center gap-2" 
-                      type="button" @click="onMoveToGroup(userGroup.id)">
+              <button
+                class="btn btn-info text-white w-100 rounded-3 d-flex align-items-center justify-content-center gap-2"
+                type="button" @click="onMoveToGroup(userGroup.id)">
                 <i class="material-icons">arrow_forward</i>
                 <span>グループへ移動</span>
               </button>
@@ -98,31 +101,27 @@
     </div>
 
     <!-- Create Group Modal -->
-    <div class="modal fade" tabindex="-1" :class="{'show d-block': userGroupCreateFromIsOpen}" role="dialog">
+    <div class="modal fade" tabindex="-1" :class="{'show d-block': userGroupCreateFormIsOpen}" role="dialog">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4 shadow">
           <div class="modal-header border-0 pb-0 px-4 pt-4">
             <h5 class="modal-title fw-bold">新しいグループを作成</h5>
-            <button class="btn-close shadow-none" type="button" @click="userGroupCreateFromIsOpen = false"></button>
+            <button class="btn-close shadow-none" type="button" @click="userGroupCreateFormIsOpen = false"></button>
           </div>
           <div class="modal-body p-4">
             <form @submit.prevent="onCreateGroup" class="d-flex flex-column gap-4">
               <div>
                 <label class="form-label fw-semibold" for="create-name">グループ名</label>
-                <input class="form-control rounded-3 border-0 shadow-sm" 
-                       id="create-name" type="text" 
-                       v-model="userGroupCreateFrom.name" 
-                       placeholder="グループ名を入力" required />
+                <input class="form-control rounded-3 border-0 shadow-sm" id="create-name" type="text"
+                  v-model="userGroupCreateForm.name" placeholder="グループ名を入力" required />
               </div>
               <div>
                 <label class="form-label fw-semibold" for="create-description">グループの説明</label>
-                <textarea class="form-control rounded-3 border-0 shadow-sm" 
-                         id="create-description" rows="3" 
-                         v-model="userGroupCreateFrom.description" 
-                         placeholder="グループの説明を入力してください"></textarea>
+                <textarea class="form-control rounded-3 border-0 shadow-sm" id="create-description" rows="3"
+                  v-model="userGroupCreateForm.description" placeholder="グループの説明を入力してください"></textarea>
               </div>
-              <button type="submit" 
-                      class="btn btn-info rounded-2 py-2 d-flex align-items-center justify-content-center gap-2">
+              <button type="submit"
+                class="btn btn-info rounded-2 py-2 d-flex align-items-center justify-content-center gap-2">
                 <i class="material-icons">add_circle</i>
                 <span>グループを作成</span>
               </button>
@@ -131,7 +130,7 @@
         </div>
       </div>
     </div>
-    <div v-if="userGroupCreateFromIsOpen" class="modal-backdrop fade show"></div>
+    <div v-if="userGroupCreateFormIsOpen" class="modal-backdrop fade show"></div>
   </div>
 
   <!-- Scripts -->
@@ -145,17 +144,18 @@
         return {
           user: {},
           userGroupList: [],
-          userGroupCreateFromIsOpen: false,
-          userGroupCreateFrom: {
+          userGroupCreateFormIsOpen: false,
+          userGroupCreateForm: {
             name: '',
             description: '',
           },
+          websocket: null
         };
       },
       async created() {
         try {
           this.user = (await axios.get("/api/user/")).data;
-          this.userGroupList = (await axios.get("/api/group/")).data;
+          this.userGroupList = (await axios.get("/api/user/group/")).data;
         } catch (error) {
           console.error(`ERROR: ${error.response.status} ${error.response.statusText}`);
           alert({
@@ -168,15 +168,27 @@
         axios.defaults.xsrfHeaderName = "X-CSRFToken";
         axios.defaults.xsrfCookieName = "csrftoken";
         axios.defaults.withCredentials = true;
+        this.websocket = new WebSocket(`wss://${location.host}/ws/user/{{ user.id }}/`);
+        this.websocket.onmessage = async (event) => {
+          if (event.data === "GROUP.JOIN") try {
+            this.userGroupList = (await axios.get("/api/user/group/")).data;
+          } catch (error) {
+            if (error.response === undefined) {
+              console.error("ERROR: Unknown error");
+            } else {
+              console.error(`ERROR: ${error.response.status} ${error.response.statusText}`);
+            }
+          }
+        }
       },
       methods: {
         async onCreateGroup() {
           try {
             await axios.get("/api/user/csrftoken/");
-            this.userGroupList.push((await axios.post("/api/group/", this.userGroupCreateFrom)).data);
-            this.userGroupCreateFromIsOpen = false;
-            this.userGroupCreateFrom.name = '';
-            this.userGroupCreateFrom.description = '';
+            this.userGroupList.push((await axios.post("/api/group/", this.userGroupCreateForm)).data);
+            this.userGroupCreateFormIsOpen = false;
+            this.userGroupCreateForm.name = '';
+            this.userGroupCreateForm.description = '';
           } catch (error) {
             console.error(`ERROR: ${error.response.status} ${error.response.statusText}`);
             alert({
@@ -189,7 +201,8 @@
         onMoveToGroup(groupId) {
           window.location.href = `/group/${groupId}/`;
         },
-        exitToGroup() {
+        async onUserLogout() {
+          await axios.post("/api/user/signout/");
           window.location.href = '/user/login/';
         },
       },
@@ -198,6 +211,5 @@
     app.mount('#app');
   </script>
 </body>
-</html>
 
-   
+</html>

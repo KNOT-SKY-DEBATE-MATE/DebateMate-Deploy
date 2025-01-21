@@ -88,6 +88,7 @@ async def onannotate(request: Request = Body(...)):
                         "- 警告が過度に厳格にならないように注釈を生成すること。"
                         "- 批判と警告に関しては、必要のない場合は省略すること。"
                         "- 常に日本語で回答すること。"
+                        "- 注釈のテキストにはHTMLタグを含めないこと。"
                         "以下が議論内容です。"
                         "<TOPIC>{}</TOPIC>"
                     ).format(request.description)

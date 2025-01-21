@@ -1,4 +1,5 @@
 import requests
+import logging
 
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
@@ -31,6 +32,10 @@ from apps.meeting.serializers import (
 from apps.user.serializers import (
     UserSerializer
 )
+
+
+# Get logger
+LOGGER = logging.getLogger(__name__)
 
 
 class GroupAPIView(APIView):
@@ -141,9 +146,14 @@ class GroupOneAPIView(APIView):
 
         # Post event to websocket
         try:
-            requests.post(settings.WEBSOCKET_URL + f'on/group/{group.id}/update/')
-        except Exception:
-            pass
+            response = requests.post(settings.WEBSOCKET_URL + f'on/group/{group.id}/update/')
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            LOGGER.error(f"HTTP error occurred: {e}")
+            return Response(status=e.response.status_code)
+        except requests.exceptions.RequestException as e:
+            LOGGER.error(f"An error occurred: {e}")
+            return Response(status=e.response.status_code)    
 
         # Return group
         return Response(out_serializer.data)
@@ -210,11 +220,27 @@ class GroupMemberAPIView(APIView):
         # Validate data
         out_serializer = self.PostOutSerializer(group_member)
 
-        # Post event to websocket server
+        # Post event to websocket
         try:
-            requests.post(settings.WEBSOCKET_URL + f'on/group/{group.id}/member.invite/')
-        except Exception:
-            pass
+            response = requests.post(settings.WEBSOCKET_URL + f'on/group/{group.id}/member.invite/')
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            LOGGER.error(f"HTTP error occurred: {e}")
+            return Response(status=e.response.status_code)
+        except requests.exceptions.RequestException as e:
+            LOGGER.error(f"An error occurred: {e}")
+            return Response(status=e.response.status_code)    
+        
+        # Post event to websocket
+        try:
+            response = requests.post(settings.WEBSOCKET_URL + f'on/user/{group_member.user.id}/group.join/')
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            LOGGER.error(f"HTTP error occurred: {e}")
+            return Response(status=e.response.status_code)
+        except requests.exceptions.RequestException as e:
+            LOGGER.error(f"An error occurred: {e}")
+            return Response(status=e.response.status_code)
 
         # Return group
         return Response(out_serializer.data)
@@ -380,9 +406,14 @@ class GroupMessageAPIView(APIView):
 
         # Post event to websocket
         try:
-            requests.post(settings.WEBSOCKET_URL + f'on/group/{group.id}/message.create/')
-        except Exception:
-            pass
+            response = requests.post(settings.WEBSOCKET_URL + f'on/group/{group.id}/message.create/')
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            LOGGER.error(f"HTTP error occurred: {e}")
+            return Response(status=e.response.status_code)
+        except requests.exceptions.RequestException as e:
+            LOGGER.error(f"An error occurred: {e}")
+            return Response(status=e.response.status_code)    
 
         # Validate data
         out_serializer = self.PostOutSerializer(group_message)

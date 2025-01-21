@@ -6,6 +6,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DebateMate</title>
+  {% load static %}
+  <link rel="icon" type="image/png" href="{% static 'img/png/favicon.png' %}">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <script src="https://cdn.jsdelivr.net/npm/vue@3.0.0/dist/vue.global.js"></script>
@@ -17,13 +19,11 @@
       border-color: #22b9aafd !important;     /* ボーダー色 */
       color: #F5F5F5 !important;            /* テキスト色 */
     }
-
     /* ホバー時のスタイル */
     .btn-info:hover {
       background-color: #007BA7 !important;
       border-color: #007BA7 !important;
     }
-
     /* disabled時のスタイル */
     .btn-info:disabled {
       background-color: #22b9aafd !important;
@@ -37,7 +37,7 @@
   <div id="app" class="container mt-5">
     <div class="row justify-content-center">
       <div class="col-12 text-center mb-4">
-        <img src="https://placehold.jp/128x128.png" alt="ダミーアイコン" class="rounded-circle shadow">
+        <img src="{% static 'img/png/logo.png' %}" alt="ダミーアイコン" class="rounded-circle shadow">
       </div>
     </div>
     <div class="row">
