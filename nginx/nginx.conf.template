@@ -6,7 +6,7 @@ http {
         server_name ${NGINX_SERVER_NAME};
 
         location /static/ {
-            root /${COMPOSE_PROJECT_NAME}/django/
+            root /${COMPOSE_PROJECT_NAME}/django;
         }
 
         location /.well-known/acme-challenge/ {
