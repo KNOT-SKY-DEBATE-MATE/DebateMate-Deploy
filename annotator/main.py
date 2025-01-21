@@ -44,7 +44,7 @@ application = FastAPI()
 client = openai.Client(api_key=config("ANNOTATOR_OPENAI_API_KEY"))
 
 # Create OpenAI tools
-tools = [
+functions = [
     {
         "name": "annotate",
         "type": "function",
@@ -124,8 +124,8 @@ async def onannotate(body: Request = Body(...)):
                         "<CONTENT>{}</CONTENT>".format(body.content)
                 }
             ],
-            tools=tools,
-            tool_choice="annotate",
+            functions=functions,
+            function_call={"name": "annotate"},
             temperature=1.0,
         )
 
