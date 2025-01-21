@@ -1,6 +1,16 @@
 version: "3.9"
 
 services:
+
+  minio:
+    build:
+      context: ./minio
+    container_name: minio
+    env_file:
+      - .env
+    expose:
+      - "${MINIO_INTERNAL_PORT}"
+
   redis:
     build:
       context: ./redis

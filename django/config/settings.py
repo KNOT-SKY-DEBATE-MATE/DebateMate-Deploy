@@ -261,3 +261,17 @@ WEBSOCKET_URL = 'http://websocket:{}/'.format(config('WEBSOCKET_INTERNAL_PORT'))
 # Annotator backend settings
 
 ANNOTATOR_URL = 'http://annotator:{}/'.format(config('ANNOTATOR_INTERNAL_PORT'))
+
+
+# MinIOストレージ設定
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+AWS_ACCESS_KEY_ID = config('MINIO_ROOT_USER')
+
+AWS_SECRET_ACCESS_KEY = config('MINIO_ROOT_PASSWORD')
+
+AWS_STORAGE_BUCKET_NAME = 'media'
+
+AWS_S3_ENDPOINT_URL = 'http://nginx'
+
+AWS_QUERYSTRING_AUTH = False  # 公開URLに認証クエリ文字列を含めない
