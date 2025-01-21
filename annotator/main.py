@@ -1,4 +1,3 @@
-import logging
 import openai
 import json
 
@@ -6,9 +5,6 @@ from decouple import config
 from pydantic import BaseModel
 from fastapi import FastAPI, Body
 from fastapi.exceptions import HTTPException
-
-
-LOGGER = logging.getLogger(__name__)
 
 
 class Request(BaseModel):
@@ -115,16 +111,13 @@ async def onannotate(body: Request = Body(...)):
         # Log response
         response = json.loads(response)
 
-        # Log response
-        LOGGER.error(response)
-
         # Parse response and return
         return response
 
     except Exception as e:
 
         # Log error
-        LOGGER.error(e)
+        logging.error(e)
 
         # Return error
         raise HTTPException(status_code=500)

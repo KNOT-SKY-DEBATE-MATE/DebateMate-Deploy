@@ -383,6 +383,10 @@ class MeetingMessageAnnotationAPIView(APIView):
         class Meta(MeetingMessageAnnotationSerializer.Meta):
             depth = 1
 
+    class ExternalPostSerializer(MeetingMessageAnnotationSerializer):
+        class Meta(MeetingMessageAnnotationSerializer.Meta):
+            fields = ['summary', 'suggestion', 'criticism', 'evaluation', 'warning']
+
     def get(self, request: Request, meeting_id, message_id):
         """
         Get a meeting message.
@@ -424,11 +428,9 @@ class MeetingMessageAnnotationAPIView(APIView):
 
                 # Return meeting
                 return Response(status=err.response.status_code)
-
-            logging.error(response.json())
             
             # Validate data
-            serializer = MeetingMessageAnnotationSerializer(data=response.json())
+            serializer = self.ExternalPostSerializer(data=response.json())
             serializer.is_valid(raise_exception=True)
 
             # Save meeting
