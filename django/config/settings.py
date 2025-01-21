@@ -107,7 +107,7 @@ ROOT_URLCONF = 'config.urls'
 
 CSRF_COOKIE_NAME = 'csrftoken'
 
-# CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
 CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
 
@@ -115,11 +115,11 @@ CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
 # Django Security
 # https://docs.djangoproject.com/en/5.1/ref/settings/#std:setting-SECURE_PROXY_SSL_HEADER
 
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = True
 
-# SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
 
 # Templates
