@@ -29,13 +29,13 @@ class Response(BaseModel):
     suggestion: str
 
     # Criticism of talk
-    criticism: str | None
+    criticism: str | None = None
 
     # Evaluation of talk
     evaluation: str
 
     # Warning of talk
-    warning: str | None
+    warning: str | None = None
 
 
 # Create FastAPI application
