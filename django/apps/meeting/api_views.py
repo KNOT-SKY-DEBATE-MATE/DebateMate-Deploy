@@ -456,7 +456,6 @@ class MeetingMessageOneAPIView(APIView):
 
 
 class MeetingMessageAnnotationAPIView(APIView):
-
     """
     Get a meeting message annotation.
     """
@@ -528,12 +527,17 @@ class MeetingMessageAnnotationAPIView(APIView):
         return Response(out_serializer.data)
     
     def post(self, request: Request, meeting_id, message_id):
-    # 既存の処理は省略
+        # Get meeting-message
+        meeting_message = get_object_or_404(MeetingMessage, id=message_id)
+
+        # Get data from request
+        serializer = self.ExternalPostSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         # ポリシー違反を検出した場合
         if serializer.validated_data['is_policy_violation']:
             # 該当するミーティングメンバーを取得
-            member = MeetingMember.objects.get(meeting__id=meeting_id, user=message.sender)
+            member = MeetingMember.objects.get(meeting__id=meeting_id, user=meeting_message.sender)
             
             # 自動でキックする
             member.is_kicked = True
