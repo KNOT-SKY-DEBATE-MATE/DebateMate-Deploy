@@ -3,8 +3,8 @@ import requests
 import logging
 
 from django.conf import settings
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404
-from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -27,6 +27,10 @@ from .serializers import (
     MeetingMessageSerializer,
     MeetingMessageAnnotationSerializer
 )
+
+
+# Get logger
+LOGGER = logging.getLogger(__name__)
 
 
 class MeetingAPIView(APIView):
@@ -72,16 +76,17 @@ class MeetingAPIView(APIView):
         serializer = self.PostSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        if not GroupMember.objects\
-                .filter(group=serializer.validated_data['group'], user=request.user)\
-                .exists():
+        # Authorize user as meeting-member
+        try:
+            GroupMember.objects.get(user=request.user, group=serializer.validated_data['group'])
+        except GroupMember.DoesNotExist:
             return Response(status=403)
         
         # Save meeting
         meeting = serializer.save()
 
         # Save meeting-member
-        MeetingMember.objects.create(meeting=meeting, user=request.user)
+        MeetingMember.objects.create(user=request.user, meeting=meeting)
 
         # Validate data
         out_serializer = self.PostOutSerializer(meeting)
@@ -104,16 +109,16 @@ class MeetingOneAPIView(APIView):
 
     def get(self, request: Request, meeting_id):
         """
-        Retrieve a meeting.
+        Redirect
         """
 
         # Get meeting
         meeting = get_object_or_404(Meeting, id=meeting_id)
 
-        # Check if user is a member of any meeting
-        if not MeetingMember.objects\
-                .filter(meeting=meeting, user=request.user, is_kicked=False)\
-                .exists():
+        # Authorize user as group-member
+        try:
+            MeetingMember.objects.get(user=request.user, meeting=meeting)
+        except MeetingMember.DoesNotExist:
             return Response(status=403)
 
         # Validate data
@@ -138,10 +143,10 @@ class MeetingOneAPIView(APIView):
         # Get meeting
         meeting = get_object_or_404(Meeting, id=meeting_id)
 
-        # Check if user is a member of any group
-        if not MeetingMember.objects\
-                .filter(meeting=meeting, user=request.user, is_kicked=False)\
-                .exists():
+        # Authorize user as group-member
+        try:
+            MeetingMember.objects.get(user=request.user, meeting=meeting)
+        except MeetingMember.DoesNotExist:
             return Response(status=403)
 
         # Get data from request
@@ -178,10 +183,10 @@ class MeetingMemberAPIView(APIView):
         # Get meeting
         meeting = get_object_or_404(Meeting, id=meeting_id)
 
-        # Check if user is a member of any meeting
-        if not MeetingMember.objects\
-                .filter(meeting=meeting, user=request.user, is_kicked=False)\
-                .exists():
+        # Authorize user as group-member
+        try:
+            MeetingMember.objects.get(meeting=meeting, user=request.user, is_kicked=False)
+        except MeetingMember.DoesNotExist:
             return Response(status=403)
 
         # Get meeting member
@@ -209,10 +214,10 @@ class MeetingMemberAPIView(APIView):
         # Get meeting
         meeting = get_object_or_404(Meeting, id=meeting_id)
 
-        # Check if user is a member of any meeting
-        if not GroupMember.objects\
-                .filter(group=meeting.group, user=request.user, is_kicked=False)\
-                .exists():
+        # Authorize user as group-member
+        try:
+            MeetingMember.objects.get(user=request.user, meeting=meeting)
+        except GroupMember.DoesNotExist:
             return Response(status=403)
         
         # Get data from request
@@ -227,6 +232,51 @@ class MeetingMemberAPIView(APIView):
 
         # Return meeting
         return Response(out_serializer.data)
+    
+
+class MeetingMemberKickAPIView(APIView):
+
+    """
+    Meeting Member Kick
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request, meeting_id):
+
+        # Get meeting object
+        meeting = get_object_or_404(Meeting, id=meeting_id)
+
+        # Cache get by key
+        votebox_key = 'meeting.kick.votes:{}'.format(meeting.id)
+        votebox = cache.get(votebox_key, [])
+        
+        # Return votes
+        return Response(votebox)
+
+    def post(self, request: Request, meeting_id):
+        
+        # Get meeting object
+        meeting = get_object_or_404(Meeting, id=meeting_id)
+
+        # Authorize user as group-member
+        try:
+            meeting_member = MeetingMember.objects.get(user=request.user, meeting=meeting)
+        except MeetingMember.DoesNotExist:
+            return Response(status=403)
+        
+        # Key of cache
+        votebox_key = 'meeting.kick.votes:{}'.format(meeting.id)
+        
+        # Cache get by key and set
+        votebox = cache.get(votebox_key, default={}, timeout=3*60)
+        votebox.add(meeting_member.id)
+
+        # Set votes
+        cache.set(votebox_key, votebox)
+
+        # Return votes
+        return Response(votebox)
     
 
 class MeetingMessageAPIView(APIView):
@@ -250,9 +300,9 @@ class MeetingMessageAPIView(APIView):
         meeting = get_object_or_404(Meeting, id=meeting_id)
 
         # Check if user is a member of any meeting
-        if not MeetingMember.objects\
-                .filter(meeting=meeting, user=request.user, is_kicked=False)\
-                .exists():
+        try:
+            MeetingMember.objects.get(meeting=meeting, user=request.user, is_kicked=False)
+        except MeetingMember.DoesNotExist:
             return Response(status=403)
 
         # Get meeting messages
@@ -281,23 +331,31 @@ class MeetingMessageAPIView(APIView):
         meeting = get_object_or_404(Meeting, id=meeting_id)
 
         # Check if user is a member of any meeting
-        meeting_member = get_object_or_404(MeetingMember, meeting=meeting, user=request.user)
+        try:
+            MeetingMember.objects.get(meeting=meeting, user=request.user, is_kicked=False)
+        except MeetingMember.DoesNotExist:
+            return Response(status=403)
 
         # Get data from request
         serializer = self.PostSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
         # Save meeting
-        meeting_message = serializer.save(meeting=meeting, sender=meeting_member.user)
+        meeting_message = serializer.save(meeting=meeting, sender=request.user)
 
         # Validate data
         out_serializer = self.PostOutSerializer(meeting_message)
 
         # Post event to websocket server
         try:
-            requests.post(settings.WEBSOCKET_URL + f'on/meeting/{meeting.id}/message/')
-        except Exception:
-            pass
+            response = requests.post(settings.WEBSOCKET_URL + f'on/meeting/{meeting.id}/message/')
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            LOGGER.error(f"HTTP error occurred: {e}")
+            return Response(status=e.response.status_code)
+        except requests.exceptions.RequestException as e:
+            LOGGER.error(f"An error occurred: {e}")
+            return Response(status=e.response.status_code)    
 
         # Return meeting
         return Response(out_serializer.data)
@@ -324,9 +382,9 @@ class MeetingMessageOneAPIView(APIView):
         meeting = get_object_or_404(Meeting, id=meeting_id)
 
         # Check if user is a member of any meeting
-        if not MeetingMember.objects\
-                .filter(meeting=meeting, user=request.user, is_kicked=False)\
-                .exists():
+        try:
+            MeetingMember.objects.get(meeting=meeting, user=request.user, is_kicked=False)
+        except MeetingMember.DoesNotExist:
             return Response(status=403)
 
         # Get meeting message
@@ -345,30 +403,6 @@ class MeetingMessageOneAPIView(APIView):
     class PatchOutSerializer(MeetingMessageSerializer):
         class Meta(MeetingMessageSerializer.Meta):
             depth = 1
-
-    def patch(self, request: Request, meeting_id, message_id):
-        """
-        Update a meeting message.
-        """
-
-        # Get meeting
-        meeting = get_object_or_404(Meeting, id=meeting_id)
-
-        # Get meeting message
-        meeting_message = get_object_or_404(MeetingMessage, id=message_id, meeting=meeting)
-
-        # Get data from request
-        serializer = MeetingMessageSerializer(meeting_message, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        
-        # Save meeting
-        meeting_message = serializer.save()
-
-        # Validate data
-        out_serializer = MeetingMessageSerializer(meeting_message)
-
-        # Return meeting
-        return Response(out_serializer.data)
 
 
 class MeetingMessageAnnotationAPIView(APIView):
@@ -396,9 +430,9 @@ class MeetingMessageAnnotationAPIView(APIView):
         meeting = get_object_or_404(Meeting, id=meeting_id)
 
         # Check if user is a member of any meeting
-        if not MeetingMember.objects\
-                .filter(meeting=meeting, user=request.user, is_kicked=False)\
-                .exists():
+        try:
+            MeetingMember.objects.get(meeting=meeting, user=request.user, is_kicked=False)
+        except MeetingMember.DoesNotExist:
             return Response(status=403)
 
         # Get meeting-message
@@ -415,19 +449,20 @@ class MeetingMessageAnnotationAPIView(APIView):
 
             # Get meeting
             serializer = MeetingMessageSerializer(meeting_message)
-
+            
+            # Get annotation
             try:
-                # Get meeting-messages
-                response = requests.post(settings.ANNOTATOR_URL + f'ai/annotate/', json={
+                response = requests.post(settings.ANNOTATOR_URL + 'ai/annotate/', json={
                     'description': meeting.description,
                     'content': serializer.data['content']
                 })
                 response.raise_for_status()
-
-            except requests.exceptions.HTTPError as err:
-
-                # Return meeting
-                return Response(status=err.response.status_code)
+            except requests.exceptions.HTTPError as e:
+                LOGGER.error(f"HTTP error occurred: {e}")
+                return Response(status=e.response.status_code)
+            except requests.exceptions.RequestException as e:
+                LOGGER.error(f"An error occurred: {e}")
+                return Response(status=e.response.status_code)
             
             # Validate data
             serializer = self.ExternalPostSerializer(data=response.json())

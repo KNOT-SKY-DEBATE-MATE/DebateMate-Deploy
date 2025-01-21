@@ -5,7 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http.request import HttpRequest
 
 
-class UserAuthenticationView(View):
+class UserLoginView(View):
 
     """
     View for user authentication
@@ -14,7 +14,7 @@ class UserAuthenticationView(View):
     def get(self, request: HttpRequest):
 
         # Return authentication page
-        return render(request, 'user-authentication.html')
+        return render(request, 'user-login.html')
 
 
 class UserView(LoginRequiredMixin, View):

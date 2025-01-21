@@ -29,7 +29,7 @@ DEBUG = config('DJANGO_DEBUG', default=False, cast=bool)
 # Django Secret Key
 # https://docs.djangoproject.com/en/5.1/ref/settings/#secret-key
 
-SECRET_KEY = config('DJANGO_SECRET_KEY', default="banana")
+SECRET_KEY = config('DJANGO_SECRET_KEY')
 
 
 
@@ -200,10 +200,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
-
-# Authentication backends
-# https://docs.djangoproject.com/en/5.1/topics/auth/customizing/#specifying-authentication-backends
 
 
 # Internationalization

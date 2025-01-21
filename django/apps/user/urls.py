@@ -1,16 +1,16 @@
 from django.urls import path
 
 from .views import (
-    UserAuthenticationView,
+    UserLoginView,
     UserView,
 )
 
 
 urlpatterns = [
     path(
-        route='authentication/',
-        view=UserAuthenticationView.as_view(),
-        name='user.authentication',
+        route='login/',
+        view=UserLoginView.as_view(),
+        name='user.login',
     ),
     path(
         route='',

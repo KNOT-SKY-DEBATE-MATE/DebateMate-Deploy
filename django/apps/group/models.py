@@ -120,7 +120,7 @@ class GroupMessage(models.Model):
     def save(self, *args, **kwargs):
 
         # Sanitize content
-        self.content = nh3.clean_text(self.content)
+        # self.content = nh3.clean_text(self.content)
 
         # Save
         super(GroupMessage, self).save(*args, **kwargs)

@@ -64,7 +64,7 @@ functions = [
 
 
 @application.post("/ai/annotate/")
-async def onannotate(body: Request = Body(...)):
+async def onannotate(request: Request = Body(...)):
     """
     Annotate meeting contents
     """
@@ -76,31 +76,28 @@ async def onannotate(body: Request = Body(...)):
             messages=[
                 {
                     "role": "system",
-                    "content":
-                        "<BEHAVIOR>"
-                        "<ANNOUNCE>"
+                    "content": (
                         "あなたは議長です。"
-                        "以下のポリシーに従って、議論を分析し、要約してください。"
-                        "</ANNOUNCE>"
-                        "<POLICY>"
+                        "以下のポリシーに従って議論中の発言を分析し、注釈を生成してください。"
                         "- 感情的にならず、中立的であること。"
                         "- 論理的で批判的な視点を持つこと。"
                         "- 議論メンバーの意見を適切に要約、批判、評価すること。"
                         "- 議題から外れた発言があれば指摘すること。"
+                        "- 議論に協力的な態度で注釈を生成すること。"
+                        "- 批判や指摘は明確に行うようにすること。"
+                        "- 警告が過度に厳格にならないように注釈を生成すること。"
+                        "- 批判と警告に関しては、必要のない場合は省略すること。"
                         "- 常に日本語で回答すること。"
-                        "</POLICY>"
-                        "</BEHAVIOR>"
-                        "<TOPIC>{}</TOPIC>".format(body.description)
+                        "以下が議論内容です。"
+                        "<TOPIC>{}</TOPIC>"
+                    ).format(request.description)
                 },
                 {
                     "role": "user",
-                    "content":
-                        "<COMMAND>"
+                    "content": (
                         "以下の発言の注釈を生成してください。"
-                        "批判や私的はきっぱりと行うようにしてください。"
-                        "攻撃的な態度ではなく、協力的な態度で発言してください。"
-                        "</COMMAND>"
-                        "<CONTENT>{}</CONTENT>".format(body.content)
+                        "<MESSAGE>{}</MESSAGE>"
+                    ).format(request.content)
                 }
             ],
             functions=functions,
@@ -108,16 +105,10 @@ async def onannotate(body: Request = Body(...)):
             temperature=1.0,
         ).choices[0].message.function_call.arguments
 
-        # Log response
-        response = json.loads(response)
-
         # Parse response and return
-        return response
+        return json.loads(response)
 
     except Exception as e:
-
-        # Log error
-        logging.error(e)
 
         # Return error
         raise HTTPException(status_code=500)

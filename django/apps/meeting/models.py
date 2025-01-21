@@ -130,8 +130,6 @@ class MeetingMessage(models.Model):
 
         # Save
         super(MeetingMessage, self).save(*args, **kwargs)
-     
-       
 
 
 class MeetingMessageAnnotation(models.Model):
@@ -150,13 +148,13 @@ class MeetingMessageAnnotation(models.Model):
     suggestion = models.TextField(max_length=255, blank=True)
 
     # Fields
-    criticism = models.TextField(max_length=255, blank=True, default='')
+    criticism = models.TextField(max_length=255, blank=True, null=True)
 
     # Fields
     evaluation = models.TextField(max_length=255, blank=True)
 
     # Fields
-    warning = models.TextField(max_length=255, blank=True, default='')
+    warning = models.TextField(max_length=255, blank=True, null=True)
 
     class Meta:
 
@@ -186,4 +184,3 @@ class MeetingMessageAnnotation(models.Model):
 
         # Save
         super(MeetingMessageAnnotation, self).save(*args, **kwargs)
-

@@ -4,6 +4,7 @@ from .api_views import (
     MeetingAPIView,
     MeetingOneAPIView,
     MeetingMemberAPIView,
+    MeetingMemberKickAPIView,
     MeetingMessageAPIView,
     MeetingMessageOneAPIView,
     MeetingMessageAnnotationAPIView,
@@ -24,6 +25,11 @@ urlpatterns = [
         route='<uuid:meeting_id>/member/',
         view=MeetingMemberAPIView.as_view(),
         name='api.meeting.(id).member',
+    ),
+    path(
+        route='<uuid:meeting_id>/member/kick/',
+        view=MeetingMemberKickAPIView.as_view(),
+        name='api.meeting.(id).member.kick',
     ),
     path(
         route='<uuid:meeting_id>/message/',
