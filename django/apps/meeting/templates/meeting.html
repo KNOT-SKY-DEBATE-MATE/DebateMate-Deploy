@@ -8,7 +8,7 @@
   <title>DebateMate</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-  <script src="https://cdn.jsdelivr.net/npm/vue@3.0.0/dist/vue.globa.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.0.0/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <style>
@@ -355,6 +355,7 @@
           userListWindowOpen: false,
           voiceRecognitionEnabled: false,
           userListWindow: null,
+          isVoting: false,
           kickVotes: [],
           showVoteModal: false,
           selectedMember: null,
@@ -451,16 +452,16 @@
         axios.defaults.xsrfCookieName = "csrftoken";
         axios.defaults.xsrfHeaderName = "X-CSRFToken";
         axios.defaults.withCredentials = true;
-        this.websocket = new WebSocket(`wss://${location.host}/ws/meeting/{{ meeting.id }}/`);
-        this.websocket.onmessage = async (event) => {
-          if (event.data === "MESSAGE.CREATE") try {
-            this.meetingMessageList = (await axios.get("/api/meeting/{{ meeting.id }}/message/")).data;
-          } catch (error) {
-            console.error(`ERROR: ${error?.response?.status} ${error?.response?.statusText}`);
-          }
-        };
+        this.initializeVotingState()
       },
       methods: {
+        // 投票状態を適切に初期化するロジック
+        initializeVotingState() {
+          this.isVoting = false;
+          this.votingInProgress = false;
+          this.selectedMember = null;
+          this.showVoteModal = false;
+        },
         async onCreateMessage() {
           try {
             this.isLoading = true;
@@ -525,7 +526,7 @@
           }
         },
 
-        async fetchkickVotes() {
+        async fetchKickVotes() {
           try {
             const response = await axios.get(`/api/meeting/${this.meetingId}/kick/`);
             this.kickVotes = response.data;
@@ -538,35 +539,37 @@
           try {
             this.votingInProgress = true;
             await axios.post(`/api/meeting/${this.meetingId}/kick/`, {
-               member_id: memberId 
+              member_id: memberId 
             });
-            await this.fetchkickVotes();
+            await this.fetchKickVotes();
             this.showVoteModal = false;
           } catch (error) {
-            this.votingInProgress = false;
             console.error("Failed to submit kick vote:", error);
+            alert("投票の送信に失敗しました");
+          } finally {
+            this.votingInProgress = false;
           }
         },
 
         // 投票モーダルを開く
-        iskicked(member) {
+        openVoteModal(member) {
           this.selectedMember = member;
           this.showVoteModal = true;
         },
 
         // キックされているかチェック
         isKicked(member) {
-          return this.kickVotes.includes(member.id);
+          return this.kickVotes.some(vote => vote.member_id === member.id);
         },
 
         // 必要な投票数を取得(例：参加者の過半数)
         getRequiredVotes() {
-          return Math.ceil(this.meetingMemberList.length / 2);
+          return Math.ceil((this.meetingMemberList.length || 1) / 2);
         },
 
         // 現在の投票数を取得
         getCurrentVotes(memberId) {
-          return this.kickVotes.filter(vote => vote.member_id === memberId).length;
+          return this.kickVotes.filter(vote => vote.member_id === memberId).length || 0;
         },
       }
     });

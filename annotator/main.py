@@ -62,7 +62,7 @@ functions = [
                     "default": False
                 }
             },
-            "required": ["summary", "suggestion", "evaluation","is_policy_violation"]
+            "required": ["summary", "suggestion", "evaluation"]
         }
     }
 ]
