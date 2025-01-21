@@ -147,7 +147,29 @@
               </button>
               <!-- Annotation content -->
               <div v-if="message.showAnnotation" class="mt-2 border rounded p-2 bg-light">
-                <p class="mb-0 small text-muted">[[ message.annotation?.content || 'Loading annotation...' ]]</p>
+                <div v-if="message.annotation" class="d-flex flex-column gap-2">
+                  <div class="small">
+                    <strong>要約：</strong>
+                    <span class="text-muted">[[ message.annotation.summary ]]</span>
+                  </div>
+                  <div class="small">
+                    <strong>評価：</strong>
+                    <span class="text-muted">[[ message.annotation.evaluation ]]</span>
+                  </div>
+                  <div class="small">
+                    <strong>課題：</strong>
+                    <span class="text-muted">[[ message.annotation.criticism ]]</span>
+                  </div>
+                  <div class="small">
+                    <strong>提案：</strong>
+                    <span class="text-muted">[[ message.annotation.suggestion ]]</span>
+                  </div>
+                  <div v-if="message.annotation.warning" class="small text-danger">
+                    <strong>警告：</strong>
+                    <span>[[ message.annotation.warning ]]</span>
+                  </div>
+                </div>
+                <p v-else class="mb-0 small text-muted">Loading annotation...</p>
               </div>
             </div>
           </div>
