@@ -328,7 +328,6 @@ class MeetingMemberKickAPIView(APIView):
             'required_votes': required_votes,
             'is_kicked': votebox[target_member_id]['is_kicked']
         })
-    
 
 class MeetingMessageAPIView(APIView):
 
