@@ -300,8 +300,8 @@
           },
           meetingMemberList: [],
           meetingData: {
-            name: "{{ meeting.title }}", // titleフィールドを表示
-            description: "{{ meeting.description }}" // descriptionフィールドを表示
+            name: "",  // 空文字列で初期化
+            description: "" // 空文字列で初期化
           },
           userData: {
             username: "Username"
@@ -348,9 +348,12 @@
           this.meetingMemberList = (await axios.get(`/api/meeting/${this.meetingId}/member/`)).data;
           
           // スクロール処理
-          this.$nextTick(() => ((e) => { 
-            e.scrollTop = e.scrollHeight; 
-          })(document.getElementById('message-list')));
+          this.$nextTick(() => {
+            const messageList = document.getElementById('message-list');
+            if (messageList) {
+              messageList.scrollTop = messageList.scrollHeight;
+            }
+          });
           
         } catch (error) {
           if (error.response == undefined) {
