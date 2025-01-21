@@ -56,8 +56,13 @@ functions = [
                     "description": "ポリシー違反やメンバーの行動に関する警告。",
                     "maxLength": 255
                 },
+                "is_policy_violation": {
+                    "type": "boolean",  
+                    "description": "ポリシー違反の有無。",
+                    "default": False
+                }
             },
-            "required": ["summary", "suggestion", "evaluation"]
+            "required": ["summary", "suggestion", "evaluation","is_policy_violation"]
         }
     }
 ]

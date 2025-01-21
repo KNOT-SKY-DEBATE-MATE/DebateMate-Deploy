@@ -156,6 +156,9 @@ class MeetingMessageAnnotation(models.Model):
     # Fields
     warning = models.TextField(max_length=255, blank=True)
 
+    # Fields
+    is_policy_violation = models.BooleanField(default=False)
+
     class Meta:
 
         # Model options
@@ -181,6 +184,9 @@ class MeetingMessageAnnotation(models.Model):
 
         # Sanitize warning
         self.warning = nh3.clean_text(self.warning)
+
+        # Sanitize is_policy_violation
+        self.is_policy_violation = nh3.clean_text(self.is_policy_violation)
 
         # Save
         super(MeetingMessageAnnotation, self).save(*args, **kwargs)
