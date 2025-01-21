@@ -145,13 +145,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    const api = {
-      async getUserCSRFToken() { return (await axios.get("/api/user/csrftoken/")); },
-      async getUserGroupList() { return (await axios.get("/api/user/group/")).data; },
-      async getUser() { return (await axios.get("/api/user/")).data; },
-      async postGroup(data) { await getUserCSRFToken(); return (await axios.post("/api/group/", data)).data; },
-      async postUserLogout() { await getUserCSRFToken(); return (await axios.post("/api/user/signout/")); },
-    }
     const app = Vue.createApp({
       data() {
         return {
@@ -167,8 +160,8 @@
       },
       async created() {
         try {
-          this.user = await api.getUser()
-          this.userGroupList = await api.getUserGroupList()
+          this.user = (await axios.get("/api/user/")).data;
+          this.userGroupList = (await axios.get("/api/user/group")).data;
         } catch (error) {
           console.error(`ERROR: ${error.response.status} ${error.response.statusText}`);
           alert({
@@ -184,7 +177,7 @@
         this.websocket = WebSocket(`wss://${location.host}/ws/user/${this.user.id}/`);
         this.websocket.onmessage = async (event) => {
           if (event.data === "GROUP.JOIN") try {
-            this.userGroupList = api.getUserGroupList()
+            this.userGroupList = (await axios.post("/api/user/group/")).data;
           } catch (error) {
             if (error.response === undefined) {
               console.error("ERROR: Unknown error");
@@ -197,8 +190,8 @@
       methods: {
         async onCreateGroup() {
           try {
-            await api.getUserCSRFToken();
-            this.userGroupList.push(await api.postGroup(this.userGroupCreateForm));
+            await axios.get("/api/user/csrftoken/");
+            this.userGroupList.push((await axios.post("/api/group/", this.userGroupCreateForm)).data);
             this.userGroupCreateFormIsOpen = false;
             this.userGroupCreateForm.name = '';
             this.userGroupCreateForm.description = '';
@@ -215,7 +208,7 @@
           window.location.href = `/group/${groupId}/`;
         },
         async onUserLogout() {
-          await api.postUserLogout();
+          await axios.post("/api/user/signout/");
           window.location.href = '/user/login/';
         },
       },
