@@ -168,7 +168,7 @@
         axios.defaults.xsrfHeaderName = "X-CSRFToken";
         axios.defaults.xsrfCookieName = "csrftoken";
         axios.defaults.withCredentials = true;
-        this.websocket = WebSocket(`wss://${location.host}/ws/user/${this.user.id}/`);
+        this.websocket = new WebSocket(`wss://${location.host}/ws/user/${this.user.id}/`);
         this.websocket.onmessage = async (event) => {
           if (event.data === "GROUP.JOIN") try {
             this.userGroupList = (await axios.get("/api/user/group/")).data;
