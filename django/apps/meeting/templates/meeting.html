@@ -436,22 +436,30 @@
         axios.defaults.xsrfHeaderName = "X-CSRFToken";
         axios.defaults.withCredentials = true;
 
-        // WebSocket設定（シンプルに戻す）
         this.websocket = new WebSocket(`wss://${location.host}/ws/meeting/{{ meeting.id }}/`);
         this.websocket.onmessage = async (event) => {
-          if (event.data === "MESSAGE.CREATE") try {
-            this.meetingMessageList = (await axios.get(`/api/meeting/{{ meeting.id }}/message/`)).data;
-            // スクロール処理
-            this.$nextTick(() => {
-              const messageList = document.getElementById('message-list');
-              if (messageList) {
-                messageList.scrollTop = messageList.scrollHeight;
-              }
-            });
-          } catch (error) {
-            console.error(`ERROR: ${error?.response?.status} ${error?.response?.statusText}`);
+          const messageData = event.data;
+          
+          // メッセージ作成イベント
+          if (messageData === "MESSAGE.CREATE") {
+            try {
+              this.meetingMessageList = (await axios.get(`/api/meeting/{{ meeting.id }}/message/`)).data;
+              this.$nextTick(() => {
+                const messageList = document.getElementById('message-list');
+                if (messageList) {
+                  messageList.scrollTop = messageList.scrollHeight;
+                }
+              });
+            } catch (error) {
+              console.error(`ERROR: ${error?.response?.status} ${error?.response?.statusText}`);
+            }
+          } 
+          // キック投票イベント
+          else if (messageData === "KICK_VOTE" || messageData === "KICK_UPDATE") {
+            await this.fetchKickVotes();
           }
         };
+        this.initializeVotingState();
       },
 
       methods: {
@@ -543,11 +551,17 @@
           if (this.votingInProgress) return;
           try {
             this.votingInProgress = true;
-            await axios.post(`/api/meeting/${this.meetingId}/member/kick/`, {
+            const response = await axios.post(`/api/meeting/${this.meetingId}/member/kick/`, {
               member_id: memberId 
             });
+            
+            // キック状態を更新
             await this.fetchKickVotes();
-            this.showVoteModal = false;
+            
+            // 投票が成功した場合、モーダルを閉じる
+            if (response.data.success) {
+              this.showVoteModal = false;
+            }
           } catch (error) {
             console.error("Failed to submit kick vote:", error);
             alert(error.response?.data?.message || "投票の送信に失敗しました");
@@ -563,8 +577,12 @@
         },
 
         // キックされているかチェック
+
+
         isKicked(member) {
-          return this.kickVotes.some(vote => vote.member_id === member.id);
+          if (!member || !this.kickVotes) return false;
+          const memberVotes = this.kickVotes.find(vote => vote.member_id === member.id);
+          return memberVotes && memberVotes.is_kicked;
         },
 
         // 必要な投票数を取得(例：参加者の過半数)
@@ -573,8 +591,22 @@
         },
 
         // 現在の投票数を取得
+
         getCurrentVotes(memberId) {
-          return this.kickVotes.filter(vote => vote.member_id === memberId).length || 0;
+          const memberVotes = this.kickVotes.find(vote => vote.member_id === memberId);
+          return memberVotes ? memberVotes.votes : 0;
+        },
+
+        async cancelKickVote(memberId) {
+          try {
+            await axios.delete(`/api/meeting/${this.meetingId}/member/kick/`, {
+              data: { member_id: memberId }
+            });
+            await this.fetchKickVotes();
+          } catch (error) {
+            console.error("Failed to cancel kick vote:", error);
+            alert("投票のキャンセルに失敗しました");
+          }
         },
       }
     });
