@@ -1,7 +1,6 @@
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
-from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.models import User
+from django.contrib.auth import login, logout, authenticate, get_user_model
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -11,7 +10,6 @@ from rest_framework import serializers
 from apps.group.models import (
     Group
 )
-
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
 class UserCSRFTokenAPIView(APIView):
@@ -52,7 +50,7 @@ class UserSigninAPIView(APIView):
 
         # Check if user exists
         if user is None:
-            return Response(status=401)
+            return Response(status=403)
 
         # Login user
         login(request=request, user=user)
@@ -82,13 +80,13 @@ class UserSignupAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         # Chcek if user exists
-        if User.objects\
-                .filter(username=serializer.validated_data['username'])\
-                .exists():
+        try:
+            get_user_model().objects.get(username=serializer.validated_data['username'])
+        except get_user_model().DoesNotExist:
             return Response(status=403)
 
         # Check if user exists
-        user = User.objects.create_user(**serializer.validated_data)
+        user = get_user_model().objects.create_user(**serializer.validated_data)
 
         # Login user
         login(request=request, user=user)
@@ -126,7 +124,7 @@ class UserAPIView(APIView):
         
         # Serializer settings
         class Meta:
-            model = User
+            model = get_user_model()
             fields = ['id', 'username']
 
     def get(self, request: Request):
