@@ -61,7 +61,7 @@
               <div class="w-100 ratio ratio-16x9 d-flex justify-content-center align-items-center text-white bg-opacity-75">
                 <div class="d-flex flex-column align-items-center">
                   <i class="material-icons mb-2">account_circle</i>
-                  <span>[[ member.user.username ]]</span>
+                  <span>[[ member.user?.username ]]</span>
                 </div>
               </div>
             </div>
@@ -69,7 +69,7 @@
               <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-2">
                   <img src="https://placehold.jp/30x30.png" alt="Member Icon" class="rounded-circle shadow-sm" width="30" height="30">
-                  <span class="text-truncate fw-semibold">[[ member.user.username ]]</span>
+                  <span class="text-truncate fw-semibold">[[ member.user?.username ]]</span>
                 </div>
                 <div class="d-flex gap-2 align-items-center">
                   <i class="material-icons text-danger" v-if="member.isMuted">mic_off</i>
@@ -109,7 +109,7 @@
         <div class="d-flex align-items-center gap-3 mb-3 p-2 rounded bg-light">
           <img src="https://placehold.jp/40x40.png" alt="User Icon" class="rounded-circle shadow-sm" width="40" height="40">
           <div class="flex-grow-1">
-            <h6 class="mb-0 fw-semibold">[[ user.username ]]</h6>
+            <h6 class="mb-0 fw-semibold">[[ user?.username ]]</h6>
             <small class="text-muted">オンライン</small>
           </div>
         </div>
@@ -155,7 +155,7 @@
             <div class="card border-0 shadow-sm w-75">
               <div class="card-body p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                  <h6 class="mb-0 fw-bold">[[ member.user.username]]</h6>
+                  <h6 class="mb-0 fw-bold">[[  message.user?.username]]</h6>
                   <small class="text-muted">[[ message.created_at ]]</small>
                 </div>
                 <p class="mb-2">[[ message.content ]]</p>
@@ -280,7 +280,7 @@
                 <div class="card">
                   <div class="bg-secondary rounded" style="aspect-ratio: 16/9;">
                     <div class="w-100 h-100 d-flex justify-content-center align-items-center text-white">
-                      CAM [[ member.user.username ]]
+                      CAM [[ member.user?.username ]]
                     </div>
                   </div>
                   <div class="card-body py-2 px-3">
@@ -288,7 +288,7 @@
                       <div class="d-flex align-items-center gap-2">
                         <img src="https://placehold.jp/30x30.png" alt="Member Icon" class="rounded-circle" width="30"
                           height="30">
-                        <span class="text-truncate">[[ member.user.username ]]</span>
+                        <span class="text-truncate">[[ member.user?.username ]]</span>
                       </div>
                       <div class="d-flex gap-1">
                         <i class="material-icons" v-if="member.isMuted">mic_off</i>
@@ -341,6 +341,7 @@
         return {
           meetingId: "{{ meeting.id }}",
           isLoading: false,
+          user: null,
           meetingMessageList: [],
           meetingMessageCreateForm: {
             content: "",
@@ -400,8 +401,11 @@
             axios.get(`/api/meeting/${this.meetingId}/member/kick/`)
           ]);
 
-          // 取得したデータを設定
-          this.user = userResponse.data;
+          // データを設定
+          if (userResponse?.data) {
+            this.user = userResponse.data;
+          }
+          
           this.meetingData = {
             name: meetingResponse.data.title,
             description: meetingResponse.data.description || "議題が設定されていません"
@@ -409,26 +413,6 @@
           this.meetingMessageList = messageResponse.data;
           this.meetingMemberList = memberResponse.data;
           this.kickVotes = kickVotesResponse.data;
-
-          // WebSocketのメッセージハンドラを設定
-          this.websocket = new WebSocket(`wss://${location.host}/ws/meeting/${this.meetingId}/`);
-          this.websocket.onmessage = async (event) => {
-            try {
-              const data = JSON.parse(event.data);
-              if (data === "MESSAGE.CREATE") {
-                this.meetingMessageList = (await axios.get(`/api/meeting/${this.meetingId}/message/`)).data;
-              } else if (data.type === "KICK_VOTE") {
-                await this.fetchKickVotes();
-              }
-              // キック成功時の処理を追加
-              else if (data.type === "KICK_SUCCESS") {
-                this.initializeVotingState();
-                await this.fetchKickVotes();
-              }
-            } catch (error) {
-              console.error(`WebSocket error:`, error);
-            }
-          };
 
           // スクロール処理
           this.$nextTick(() => {
@@ -439,27 +423,45 @@
           });
 
         } catch (error) {
-          if (error.response == undefined) {
-            console.error("ERROR: Unknown error", error);
-          } else {
-            console.error(`ERROR: ${error.response.status} ${error.response.statusText}`, error);
-            alert({
-              404: "ミーティングが見つかりません",
-              403: "権限がありません",
-              500: "予期せぬエラーが発生しました",
-            }[error.response.status] || "不明なエラーが発生しました。サイト管理者にお問い合わせください");
-          }
+          console.error("ERROR:", error);
+          // エラーハンドリング
         } finally {
           this.isLoading = false;
         }
       },
 
       mounted() {
+        // 基本設定
         axios.defaults.xsrfCookieName = "csrftoken";
         axios.defaults.xsrfHeaderName = "X-CSRFToken";
         axios.defaults.withCredentials = true;
-        this.initializeVotingState()
+
+        this.websocket = new WebSocket(`wss://${location.host}/ws/meeting/{{ meeting.id }}/`);
+        this.websocket.onmessage = async (event) => {
+          const messageData = event.data;
+          
+          // メッセージ作成イベント
+          if (messageData === "MESSAGE.CREATE") {
+            try {
+              this.meetingMessageList = (await axios.get(`/api/meeting/{{ meeting.id }}/message/`)).data;
+              this.$nextTick(() => {
+                const messageList = document.getElementById('message-list');
+                if (messageList) {
+                  messageList.scrollTop = messageList.scrollHeight;
+                }
+              });
+            } catch (error) {
+              console.error(`ERROR: ${error?.response?.status} ${error?.response?.statusText}`);
+            }
+          } 
+          // キック投票イベント
+          else if (messageData === "KICK_VOTE" || messageData === "KICK_UPDATE") {
+            await this.fetchKickVotes();
+          }
+        };
+        this.initializeVotingState();
       },
+
       methods: {
         // 投票状態を適切に初期化するロジック
         initializeVotingState() {
@@ -472,9 +474,16 @@
           try {
             this.isLoading = true;
             await axios.get("/api/user/csrftoken/");
-            this.meetingMessageList.push((await axios.post(`/api/meeting/${this.meetingId}/message/`, this.meetingMessageCreateForm)).data);
+            this.meetingMessageList.push(
+              (await axios.post(`/api/meeting/${this.meetingId}/message/`, this.meetingMessageCreateForm)).data
+            );
             this.meetingMessageCreateForm.content = "";
-            this.$nextTick(() => ((e) => { e.scrollTop = e.scrollHeight; })(document.getElementById('message-list')));
+            this.$nextTick(() => {
+              const messageList = document.getElementById('message-list');
+              if (messageList) {
+                messageList.scrollTop = messageList.scrollHeight;
+              }
+            });
           } catch (error) {
             if (error.response == undefined) {
               console.error("ERROR: Unknown error");
@@ -490,9 +499,6 @@
           } finally {
             this.isLoading = false;
           }
-        },
-        exitToGroup() {
-          window.location.href = "/group/{{ meeting.group.id }}/";
         },
 
         openUserListWindow() {
@@ -545,11 +551,17 @@
           if (this.votingInProgress) return;
           try {
             this.votingInProgress = true;
-            await axios.post(`/api/meeting/${this.meetingId}/member/kick/`, {
+            const response = await axios.post(`/api/meeting/${this.meetingId}/member/kick/`, {
               member_id: memberId 
             });
+            
+            // キック状態を更新
             await this.fetchKickVotes();
-            this.showVoteModal = false;
+            
+            // 投票が成功した場合、モーダルを閉じる
+            if (response.data.success) {
+              this.showVoteModal = false;
+            }
           } catch (error) {
             console.error("Failed to submit kick vote:", error);
             alert(error.response?.data?.message || "投票の送信に失敗しました");
@@ -565,8 +577,12 @@
         },
 
         // キックされているかチェック
+
+
         isKicked(member) {
-          return this.kickVotes.some(vote => vote.member_id === member.id);
+          if (!member || !this.kickVotes) return false;
+          const memberVotes = this.kickVotes.find(vote => vote.member_id === member.id);
+          return memberVotes && memberVotes.is_kicked;
         },
 
         // 必要な投票数を取得(例：参加者の過半数)
@@ -575,8 +591,22 @@
         },
 
         // 現在の投票数を取得
+
         getCurrentVotes(memberId) {
-          return this.kickVotes.filter(vote => vote.member_id === memberId).length || 0;
+          const memberVotes = this.kickVotes.find(vote => vote.member_id === memberId);
+          return memberVotes ? memberVotes.votes : 0;
+        },
+
+        async cancelKickVote(memberId) {
+          try {
+            await axios.delete(`/api/meeting/${this.meetingId}/member/kick/`, {
+              data: { member_id: memberId }
+            });
+            await this.fetchKickVotes();
+          } catch (error) {
+            console.error("Failed to cancel kick vote:", error);
+            alert("投票のキャンセルに失敗しました");
+          }
         },
       }
     });

@@ -118,7 +118,7 @@ class MeetingMessage(models.Model):
         verbose_name_plural = 'Meeting Messages'
 
         # Ordering
-        ordering = ['-created_at']
+        ordering = ['created_at']
 
     def save(self, *args, **kwargs):
         """
