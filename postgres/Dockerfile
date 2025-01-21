@@ -1,4 +1,5 @@
 FROM postgres:15
+USER root
 RUN apt-get update && apt-get install -y gettext-base && apt-get clean
 WORKDIR /docker-entrypoint-initdb.d
 COPY init.sql.template /docker-entrypoint-initdb.d/init.sql.template
