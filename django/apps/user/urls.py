@@ -1,6 +1,4 @@
-from django.urls import path, include
-from allauth.account.views import LoginView
-from allauth.socialaccount.views import SignupView, LoginCancelledView, LoginErrorView
+from django.urls import path
 
 from .views import (
     UserAuthenticationView,
