@@ -124,7 +124,7 @@ async def onannotate(body: Request = Body(...)):
                 }
             ],
             tools=tools,
-            tool_choices="annotate",
+            tool_choice="annotate",
             temperature=1.0,
         )
 
