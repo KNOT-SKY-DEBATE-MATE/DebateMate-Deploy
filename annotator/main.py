@@ -46,8 +46,8 @@ client = openai.Client(api_key=config("ANNOTATOR_OPENAI_API_KEY"))
 # Create OpenAI tools
 tools = [
     {
-        "type": "tool",
         "name": "annotate",
+        "type": "function",
         "description": "議論内容を分析し、要約、提案、批判、評価、ポリシー違反の警告を提供します。",
         "parameters": {
             "type": "object",
