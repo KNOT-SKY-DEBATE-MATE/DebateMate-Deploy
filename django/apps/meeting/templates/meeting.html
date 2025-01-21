@@ -401,13 +401,11 @@
             axios.get(`/api/meeting/${this.meetingId}/member/kick/`)
           ]);
 
-          // userデータの設定時にチェックを追加
+          // データを設定
           if (userResponse?.data) {
             this.user = userResponse.data;
-          } else {
-            console.error('User data is missing or invalid');
           }
-
+          
           this.meetingData = {
             name: meetingResponse.data.title,
             description: meetingResponse.data.description || "議題が設定されていません"
@@ -416,66 +414,51 @@
           this.meetingMemberList = memberResponse.data;
           this.kickVotes = kickVotesResponse.data;
 
-          // WebSocketの設定を改善
-          this.websocket = new WebSocket(`wss://${location.host}/ws/meeting/${this.meetingId}/`);
-          
-          this.websocket.onopen = () => {
-            console.log('WebSocket connected');
-          };
-
-          this.websocket.onerror = (error) => {
-            console.error('WebSocket connection error:', error);
-          };
-
-          this.websocket.onclose = (event) => {
-            console.log('WebSocket connection closed:', event);
-          };
-
-          this.websocket.onmessage = async (event) => {
-            try {
-              const messageData = event.data;
-              if (messageData === "MESSAGE.CREATE") {
-                this.meetingMessageList = (await axios.get(`/api/meeting/${this.meetingId}/message/`)).data;
-                // メッセージリスト更新後にスクロール
-                this.$nextTick(() => {
-                  const messageList = document.getElementById('message-list');
-                  if (messageList) {
-                    messageList.scrollTop = messageList.scrollHeight;
-                  }
-                });
-              } else if (typeof messageData === 'string' && messageData.startsWith('{')) {
-                const data = JSON.parse(messageData);
-                if (data.type === "KICK_VOTE") {
-                  await this.fetchKickVotes();
-                }
-              }
-            } catch (error) {
-              console.error(`WebSocket message handling error:`, error);
+          // スクロール処理
+          this.$nextTick(() => {
+            const messageList = document.getElementById('message-list');
+            if (messageList) {
+              messageList.scrollTop = messageList.scrollHeight;
             }
-          };
+          });
 
         } catch (error) {
-          if (!error.response) {
-            console.error("ERROR: Unknown error", error);
-          } else {
-            console.error(`ERROR: ${error.response.status} ${error.response.statusText}`, error);
-            alert({
-              404: "ミーティングが見つかりません",
-              403: "権限がありません",
-              500: "予期せぬエラーが発生しました",
-            }[error.response.status] || "不明なエラーが発生しました。サイト管理者にお問い合わせください");
-          }
+          console.error("ERROR:", error);
+          // エラーハンドリング
         } finally {
           this.isLoading = false;
         }
       },
 
       mounted() {
+        // 基本設定
         axios.defaults.xsrfCookieName = "csrftoken";
         axios.defaults.xsrfHeaderName = "X-CSRFToken";
         axios.defaults.withCredentials = true;
-        this.initializeVotingState()
+        this.initializeVotingState();
+
+        // WebSocket設定（シンプルに戻す）
+        this.websocket = new WebSocket(`wss://${location.host}/ws/meeting/${this.meetingId}/`);
+        this.websocket.onmessage = async (event) => {
+          if (event.data === "MESSAGE.CREATE") {
+            try {
+              this.meetingMessageList = (await axios.get(`/api/meeting/${this.meetingId}/message/`)).data;
+              // メッセージ更新後のスクロール
+              this.$nextTick(() => {
+                const messageList = document.getElementById('message-list');
+                if (messageList) {
+                  messageList.scrollTop = messageList.scrollHeight;
+                }
+              });
+            } catch (error) {
+              console.error("Message update error:", error);
+            }
+          } else if (event.data === "KICK_VOTE") {
+            await this.fetchKickVotes();
+          }
+        };
       },
+
       methods: {
         // 投票状態を適切に初期化するロジック
         initializeVotingState() {
