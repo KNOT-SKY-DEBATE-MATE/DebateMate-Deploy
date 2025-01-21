@@ -359,7 +359,7 @@ class MeetingMessageAPIView(APIView):
 
         # Post event to websocket server
         try:
-            response = requests.post(settings.WEBSOCKET_URL + f'on/meeting/{meeting.id}/message/')
+            response = requests.post(settings.WEBSOCKET_URL + f'on/meeting/{meeting.id}/message.create/')
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             LOGGER.error(f"HTTP error occurred: {e}")
