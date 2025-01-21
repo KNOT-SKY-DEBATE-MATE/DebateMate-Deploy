@@ -61,7 +61,7 @@
               <div class="w-100 ratio ratio-16x9 d-flex justify-content-center align-items-center text-white bg-opacity-75">
                 <div class="d-flex flex-column align-items-center">
                   <i class="material-icons mb-2">account_circle</i>
-                  <span>[[ member.user.username ]]</span>
+                  <span>[[ member.user?.username ]]</span>
                 </div>
               </div>
             </div>
@@ -69,7 +69,7 @@
               <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-2">
                   <img src="https://placehold.jp/30x30.png" alt="Member Icon" class="rounded-circle shadow-sm" width="30" height="30">
-                  <span class="text-truncate fw-semibold">[[ member.user.username ]]</span>
+                  <span class="text-truncate fw-semibold">[[ member.user?.username ]]</span>
                 </div>
                 <div class="d-flex gap-2 align-items-center">
                   <i class="material-icons text-danger" v-if="member.isMuted">mic_off</i>
@@ -109,7 +109,7 @@
         <div class="d-flex align-items-center gap-3 mb-3 p-2 rounded bg-light">
           <img src="https://placehold.jp/40x40.png" alt="User Icon" class="rounded-circle shadow-sm" width="40" height="40">
           <div class="flex-grow-1">
-            <h6 class="mb-0 fw-semibold">[[ user.username ]]</h6>
+            <h6 class="mb-0 fw-semibold">[[ user?.username ]]</h6>
             <small class="text-muted">オンライン</small>
           </div>
         </div>
@@ -155,7 +155,7 @@
             <div class="card border-0 shadow-sm w-75">
               <div class="card-body p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                  <h6 class="mb-0 fw-bold">[[ member.user.username]]</h6>
+                  <h6 class="mb-0 fw-bold">[[  message.user?.username]]</h6>
                   <small class="text-muted">[[ message.created_at ]]</small>
                 </div>
                 <p class="mb-2">[[ message.content ]]</p>
@@ -280,7 +280,7 @@
                 <div class="card">
                   <div class="bg-secondary rounded" style="aspect-ratio: 16/9;">
                     <div class="w-100 h-100 d-flex justify-content-center align-items-center text-white">
-                      CAM [[ member.user.username ]]
+                      CAM [[ member.user?.username ]]
                     </div>
                   </div>
                   <div class="card-body py-2 px-3">
@@ -288,7 +288,7 @@
                       <div class="d-flex align-items-center gap-2">
                         <img src="https://placehold.jp/30x30.png" alt="Member Icon" class="rounded-circle" width="30"
                           height="30">
-                        <span class="text-truncate">[[ member.user.username ]]</span>
+                        <span class="text-truncate">[[ member.user?.username ]]</span>
                       </div>
                       <div class="d-flex gap-1">
                         <i class="material-icons" v-if="member.isMuted">mic_off</i>
@@ -341,6 +341,7 @@
         return {
           meetingId: "{{ meeting.id }}",
           isLoading: false,
+          user: null,
           meetingMessageList: [],
           meetingMessageCreateForm: {
             content: "",
@@ -400,8 +401,13 @@
             axios.get(`/api/meeting/${this.meetingId}/member/kick/`)
           ]);
 
-          // 取得したデータを設定
-          this.user = userResponse.data;
+          // userデータの設定時にチェックを追加
+          if (userResponse?.data) {
+            this.user = userResponse.data;
+          } else {
+            console.error('User data is missing or invalid');
+          }
+
           this.meetingData = {
             name: meetingResponse.data.title,
             description: meetingResponse.data.description || "議題が設定されていません"
@@ -410,36 +416,46 @@
           this.meetingMemberList = memberResponse.data;
           this.kickVotes = kickVotesResponse.data;
 
-          // WebSocketのメッセージハンドラを設定
+          // WebSocketの設定を改善
           this.websocket = new WebSocket(`wss://${location.host}/ws/meeting/${this.meetingId}/`);
+          
+          this.websocket.onopen = () => {
+            console.log('WebSocket connected');
+          };
+
+          this.websocket.onerror = (error) => {
+            console.error('WebSocket connection error:', error);
+          };
+
+          this.websocket.onclose = (event) => {
+            console.log('WebSocket connection closed:', event);
+          };
+
           this.websocket.onmessage = async (event) => {
             try {
-              const data = JSON.parse(event.data);
-              if (data === "MESSAGE.CREATE") {
+              const messageData = event.data;
+              if (messageData === "MESSAGE.CREATE") {
                 this.meetingMessageList = (await axios.get(`/api/meeting/${this.meetingId}/message/`)).data;
-              } else if (data.type === "KICK_VOTE") {
-                await this.fetchKickVotes();
-              }
-              // キック成功時の処理を追加
-              else if (data.type === "KICK_SUCCESS") {
-                this.initializeVotingState();
-                await this.fetchKickVotes();
+                // メッセージリスト更新後にスクロール
+                this.$nextTick(() => {
+                  const messageList = document.getElementById('message-list');
+                  if (messageList) {
+                    messageList.scrollTop = messageList.scrollHeight;
+                  }
+                });
+              } else if (typeof messageData === 'string' && messageData.startsWith('{')) {
+                const data = JSON.parse(messageData);
+                if (data.type === "KICK_VOTE") {
+                  await this.fetchKickVotes();
+                }
               }
             } catch (error) {
-              console.error(`WebSocket error:`, error);
+              console.error(`WebSocket message handling error:`, error);
             }
           };
 
-          // スクロール処理
-          this.$nextTick(() => {
-            const messageList = document.getElementById('message-list');
-            if (messageList) {
-              messageList.scrollTop = messageList.scrollHeight;
-            }
-          });
-
         } catch (error) {
-          if (error.response == undefined) {
+          if (!error.response) {
             console.error("ERROR: Unknown error", error);
           } else {
             console.error(`ERROR: ${error.response.status} ${error.response.statusText}`, error);
@@ -472,21 +488,19 @@
           try {
             this.isLoading = true;
             await axios.get("/api/user/csrftoken/");
-            this.meetingMessageList.push((await axios.post(`/api/meeting/${this.meetingId}/message/`, this.meetingMessageCreateForm)).data);
+            const response = await axios.post(`/api/meeting/${this.meetingId}/message/`, this.meetingMessageCreateForm);
+            this.meetingMessageList.push(response.data);
             this.meetingMessageCreateForm.content = "";
-            this.$nextTick(() => ((e) => { e.scrollTop = e.scrollHeight; })(document.getElementById('message-list')));
+            
+            // スクロール処理の修正
+            this.$nextTick(() => {
+              const messageList = document.getElementById('message-list');
+              if (messageList) {
+                messageList.scrollTop = messageList.scrollHeight;
+              }
+            });
           } catch (error) {
-            if (error.response == undefined) {
-              console.error("ERROR: Unknown error");
-            } else {
-              console.error(error);
-              alert({
-                400: "メッセージが既に送信されています",
-                403: "権限がありません",
-                404: "ミーティングが見つかりません",
-                500: "予期せぬエラーが発生しました",
-              }[error.response.status] || "不明なエラーが発生しました。サイト管理者にお問い合わせください");
-            }
+            // エラー処理
           } finally {
             this.isLoading = false;
           }
