@@ -20,7 +20,7 @@ class Connection:
     WebSocket connection
     """
 
-    websockets: set[WebSocket] = dataclasses.field(set)
+    websockets: set[WebSocket] = dataclasses.field(default_factory=set)
 
 
 # Websocket connection registry
