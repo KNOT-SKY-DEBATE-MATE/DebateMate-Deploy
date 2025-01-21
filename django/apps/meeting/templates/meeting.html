@@ -374,7 +374,7 @@
           try {
             this.isLoading = true;
             const response = await axios.get(`/api/meeting/${this.meetingId}/message/${message.id}/annotation/`);
-            // $setを使わず、直接代入
+            console.log('Annotation response:', response.data);
             message.annotation = response.data;
           } catch (error) {
             console.error("Failed to fetch annotation:", error);
