@@ -396,7 +396,7 @@ class MeetingMessageAnnotationAPIView(APIView):
             return Response(status=403)
 
         # Get meeting-message
-        meeting_message = get_object_or_404(MeetingMessage, id=message_id, meeting=meeting)
+        meeting_message = get_object_or_404(MeetingMessage, id=message_id)
 
         try:
             # Get meeting-message
@@ -428,7 +428,7 @@ class MeetingMessageAnnotationAPIView(APIView):
             serializer.is_valid(raise_exception=True)
 
             # Save meeting
-            meeting_message_annotation = serializer.save(message=meeting_message, meeting=meeting)
+            meeting_message_annotation = serializer.save(message=meeting_message)
 
             # Validate data
             out_serializer = self.GetOutSerializer(meeting_message_annotation)

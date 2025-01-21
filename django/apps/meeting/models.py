@@ -93,6 +93,9 @@ class MeetingMessage(models.Model):
     Discussion Message Model
     """
 
+    # Unique ID
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+
     # Fields
     meeting = models.ForeignKey(Meeting, on_delete=models.CASCADE)
 
@@ -136,9 +139,6 @@ class MeetingMessageAnnotation(models.Model):
     """
     Discussion Message Summary Model
     """
-
-    # Fields
-    meeting = models.ForeignKey(Meeting, on_delete=models.CASCADE)
 
     # Fields
     message = models.ForeignKey(MeetingMessage, on_delete=models.CASCADE)
