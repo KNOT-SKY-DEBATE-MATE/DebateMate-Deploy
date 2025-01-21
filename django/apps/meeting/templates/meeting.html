@@ -500,6 +500,9 @@
             this.isLoading = false;
           }
         },
+        exitToGroup() {
+          window.location.href = "/group/{{ meeting.group.id }}/";
+        },
 
         openUserListWindow() {
           const width = 800;
