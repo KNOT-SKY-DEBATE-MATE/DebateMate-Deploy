@@ -6,35 +6,28 @@ import json
 from fastapi import FastAPI
 from fastapi.websockets import WebSocket, WebSocketDisconnect
 
-# Get logger
+# ロガーの取得
 logger = logging.getLogger(__name__)
 
-# Vosk model object
+# Vosk モデルの初期化
 model = vosk.Model(model_path='vosk-model-small-ja-0.22')
 
-# FastAPI application
+# FastAPI アプリケーションの作成
 application = FastAPI()
 
 @application.websocket("/ws-voice/{voice_id}/")
 async def onconnect(websocket: WebSocket, voice_id: uuid.UUID):
-    # Awaiting connection
     await websocket.accept()
-
-    # Recognizer
     recognizer = vosk.KaldiRecognizer(model, 16000)
     
     try:
-        # Main loop
         while True:
-            # Get audio chunk-stream
             data = await websocket.receive_bytes()
 
             if recognizer.AcceptWaveform(data):
-                # Case where voice-message is completed
                 result = recognizer.Result()
                 result_dict = json.loads(result)
                 
-                # Check key of result dict
                 if "text" in result_dict:
                     await websocket.send_text(
                         json.dumps({
@@ -42,14 +35,11 @@ async def onconnect(websocket: WebSocket, voice_id: uuid.UUID):
                             "is_completed": True,
                         })
                     )
-                    # 接続をすぐに閉じず、必要なら他の処理を続ける
-                    # await websocket.close() は削除
+                    # 接続終了の呼び出しはここでは行わない
             else:
-                # Case where voice-message is partial
                 partial = recognizer.PartialResult()
                 partial_dict = json.loads(partial)
 
-                # Check key of partial result dict
                 if "partial" in partial_dict:
                     await websocket.send_text(
                         json.dumps({
@@ -62,4 +52,5 @@ async def onconnect(websocket: WebSocket, voice_id: uuid.UUID):
     except Exception as e:
         logger.error(f"Error: {e}")
     finally:
+        # 最終的に接続を閉じる
         await websocket.close()
