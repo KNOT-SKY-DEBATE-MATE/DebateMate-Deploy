@@ -1,5 +1,6 @@
 import logging
 import openai
+import json
 
 from decouple import config
 from pydantic import BaseModel
@@ -127,10 +128,10 @@ async def onannotate(body: Request = Body(...)):
             functions=functions,
             function_call={"name": "annotate"},
             temperature=1.0,
-        )
+        ).choices[0].message.function_call.arguments
 
         # Parse response and return
-        return Response(**response.choices[0].message.function_call.arguments)
+        return Response(json.loads(response))
 
     except Exception as e:
 
