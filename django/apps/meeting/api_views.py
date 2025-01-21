@@ -78,7 +78,7 @@ class MeetingAPIView(APIView):
 
         # Authorize user as meeting-member
         try:
-            GroupMember.objects.get(user=request.user, group=serializer.validated_data['group'])
+            GroupMember.objects.get(user=request.user, group=serializer.validated_data['group'], is_kicked=False)
         except GroupMember.DoesNotExist:
             return Response(status=403)
         
