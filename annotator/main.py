@@ -129,7 +129,7 @@ async def onannotate(body: Request = Body(...)):
             temperature=1.0,
         )
 
-        # Parse response
+        # Parse response and return
         return Response(**response.choices[0].message.function_call.arguments)
 
     except Exception as e:
