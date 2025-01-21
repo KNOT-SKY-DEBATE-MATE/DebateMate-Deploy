@@ -10,7 +10,7 @@ http {
         }
 
         location / {
-            return 301 https://${NGINX_SERVER_NAME}/user/;
+            return 301 https://$host$request_uri;
         }
     }
 
@@ -25,7 +25,7 @@ http {
         ssl_ciphers HIGH:!aNULL:!MD5;
 
         location /static/ {
-            alias '/var/www/django/staticfiles'
+            alias /app/staticfiles/;
         }
 
         location / {

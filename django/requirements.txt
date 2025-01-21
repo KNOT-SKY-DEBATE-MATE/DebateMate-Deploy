@@ -1,5 +1,6 @@
 python-decouple
 django[argon2]
+django-storages[boto3]
 django-otp
 django-allauth
 django-nh3
