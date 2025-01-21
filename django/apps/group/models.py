@@ -40,11 +40,6 @@ class Group(models.Model):
         # Save
         super(Group, self).save(*args, **kwargs)
 
-    def __str__(self):
-
-        # Return group identifier for websocket
-        return f'group.{self.id}'
-
 
 class GroupMember(models.Model):
 
@@ -81,11 +76,6 @@ class GroupMember(models.Model):
                 fields=['group', 'user'], name='unique_group_user'),
         ]
 
-    def __str__(self):
-
-        # Return group-member identifier for websocket
-        return f'group.{self.group.id}.member.{self.id}'
-
 
 class GroupMessage(models.Model):
 
@@ -120,12 +110,7 @@ class GroupMessage(models.Model):
     def save(self, *args, **kwargs):
 
         # Sanitize content
-        # self.content = nh3.clean_text(self.content)
+        self.content = nh3.clean_text(self.content)
 
         # Save
         super(GroupMessage, self).save(*args, **kwargs)
-
-    def __str__(self):
-
-        # Return group-message identifier for websocket
-        return f'group.{self.group.id}.message.{self.id}'

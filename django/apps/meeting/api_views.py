@@ -88,6 +88,17 @@ class MeetingAPIView(APIView):
         # Save meeting-member
         MeetingMember.objects.create(user=request.user, meeting=meeting)
 
+        # Send event to websocket
+        try:
+            response = requests.post(settings.WEBSOCKET_URL + f'on/meeting/{meeting.id}/member.join')
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            LOGGER.error(f"HTTP error occurred: {e}")
+            return Response(status=e.response.status_code)
+        except requests.exceptions.RequestException as e:
+            LOGGER.error(f"An error occurred: {e}")
+            return Response(status=e.response.status_code)    
+
         # Validate data
         out_serializer = self.PostOutSerializer(meeting)
 
