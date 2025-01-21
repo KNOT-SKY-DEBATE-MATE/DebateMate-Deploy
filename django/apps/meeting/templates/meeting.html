@@ -437,12 +437,14 @@
         axios.defaults.withCredentials = true;
         this.initializeVotingState();
 
-        // WebSocket設定（シンプルに戻す）
         this.websocket = new WebSocket(`wss://${location.host}/ws/meeting/${this.meetingId}/`);
         this.websocket.onmessage = async (event) => {
           if (event.data === "MESSAGE.CREATE") {
             try {
-              this.meetingMessageList = (await axios.get(`/api/meeting/${this.meetingId}/message/`)).data;
+              // 新しいメッセージリストを取得して更新
+              const response = await axios.get(`/api/meeting/${this.meetingId}/message/`);
+              this.meetingMessageList = response.data;
+              
               // メッセージ更新後のスクロール
               this.$nextTick(() => {
                 const messageList = document.getElementById('message-list');
@@ -471,11 +473,12 @@
           try {
             this.isLoading = true;
             await axios.get("/api/user/csrftoken/");
-            const response = await axios.post(`/api/meeting/${this.meetingId}/message/`, this.meetingMessageCreateForm);
-            this.meetingMessageList.push(response.data);
+            await axios.post(`/api/meeting/${this.meetingId}/message/`, this.meetingMessageCreateForm);
+            // 送信後にメッセージリストを再取得
+            this.meetingMessageList = (await axios.get(`/api/meeting/${this.meetingId}/message/`)).data;
             this.meetingMessageCreateForm.content = "";
             
-            // スクロール処理の修正
+            // スクロール処理
             this.$nextTick(() => {
               const messageList = document.getElementById('message-list');
               if (messageList) {
@@ -483,7 +486,7 @@
               }
             });
           } catch (error) {
-            // エラー処理
+            console.error("Message send error:", error);
           } finally {
             this.isLoading = false;
           }
