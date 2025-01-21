@@ -435,28 +435,21 @@
         axios.defaults.xsrfCookieName = "csrftoken";
         axios.defaults.xsrfHeaderName = "X-CSRFToken";
         axios.defaults.withCredentials = true;
-        this.initializeVotingState();
 
-        this.websocket = new WebSocket(`wss://${location.host}/ws/meeting/${this.meetingId}/`);
+        // WebSocket設定（シンプルに戻す）
+        this.websocket = new WebSocket(`wss://${location.host}/ws/meeting/{{ meeting.id }}/`);
         this.websocket.onmessage = async (event) => {
-          if (event.data === "MESSAGE.CREATE") {
-            try {
-              // 新しいメッセージリストを取得して更新
-              const response = await axios.get(`/api/meeting/${this.meetingId}/message/`);
-              this.meetingMessageList = response.data;
-              
-              // メッセージ更新後のスクロール
-              this.$nextTick(() => {
-                const messageList = document.getElementById('message-list');
-                if (messageList) {
-                  messageList.scrollTop = messageList.scrollHeight;
-                }
-              });
-            } catch (error) {
-              console.error("Message update error:", error);
-            }
-          } else if (event.data === "KICK_VOTE") {
-            await this.fetchKickVotes();
+          if (event.data === "MESSAGE.CREATE") try {
+            this.meetingMessageList = (await axios.get(`/api/meeting/{{ meeting.id }}/message/`)).data;
+            // スクロール処理
+            this.$nextTick(() => {
+              const messageList = document.getElementById('message-list');
+              if (messageList) {
+                messageList.scrollTop = messageList.scrollHeight;
+              }
+            });
+          } catch (error) {
+            console.error(`ERROR: ${error?.response?.status} ${error?.response?.statusText}`);
           }
         };
       },
@@ -473,12 +466,10 @@
           try {
             this.isLoading = true;
             await axios.get("/api/user/csrftoken/");
-            await axios.post(`/api/meeting/${this.meetingId}/message/`, this.meetingMessageCreateForm);
-            // 送信後にメッセージリストを再取得
-            this.meetingMessageList = (await axios.get(`/api/meeting/${this.meetingId}/message/`)).data;
+            this.meetingMessageList.push(
+              (await axios.post(`/api/meeting/${this.meetingId}/message/`, this.meetingMessageCreateForm)).data
+            );
             this.meetingMessageCreateForm.content = "";
-            
-            // スクロール処理
             this.$nextTick(() => {
               const messageList = document.getElementById('message-list');
               if (messageList) {
@@ -486,13 +477,20 @@
               }
             });
           } catch (error) {
-            console.error("Message send error:", error);
+            if (error.response == undefined) {
+              console.error("ERROR: Unknown error");
+            } else {
+              console.error(error);
+              alert({
+                400: "メッセージが既に送信されています",
+                403: "権限がありません",
+                404: "ミーティングが見つかりません",
+                500: "予期せぬエラーが発生しました",
+              }[error.response.status] || "不明なエラーが発生しました。サイト管理者にお問い合わせください");
+            }
           } finally {
             this.isLoading = false;
           }
-        },
-        exitToGroup() {
-          window.location.href = "/group/{{ meeting.group.id }}/";
         },
 
         openUserListWindow() {
