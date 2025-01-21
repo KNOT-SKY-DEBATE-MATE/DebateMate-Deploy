@@ -10,7 +10,7 @@ from fastapi.websockets import (
 )
 
 # Get logger
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 # Vosk model object
 model = vosk.Model(model_path='vosk-model-small-ja-0.22')
@@ -43,7 +43,9 @@ async def onconnect(websocket: WebSocket, voice_id: uuid.UUID):
                 
                 # Check key of result dict
                 if "text" in result_dict:
-                    await websocket.send_text(result_dict["text"])
+                    await websocket.send_text({"text": result_dict["text"], "is_completed": True})
+                    await websocket.close()
+
             else:
                 # Case where voice-message is not partial
                 partial = recognizer.PartialResult()
@@ -51,7 +53,7 @@ async def onconnect(websocket: WebSocket, voice_id: uuid.UUID):
 
                 # Check key of partial result dict
                 if "partial" in partial_dict:
-                    await websocket.send_text(partial_dict["text"])
+                    await websocket.send_text({"text": partial_dict["partial"], "is_completed": False})
     
     except WebSocketDisconnect:
         ...

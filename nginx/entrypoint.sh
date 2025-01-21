@@ -8,6 +8,6 @@ if ! crontab -l | grep -q "certbot renew"; then
     (crontab -l ; echo "0 0 * * * certbot renew --quiet && nginx -s reload") | crontab -
 fi
 
-envsubst '${NGINX_SERVER_NAME} ${DJANGO_INTERNAL_PORT} ${WEBSOCKET_INTERNAL_PORT} ${COMPOSE_PROJECT_NAME}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+envsubst '${NGINX_SERVER_NAME} ${DJANGO_INTERNAL_PORT} ${WEBSOCKET_INTERNAL_PORT} ${COMPOSE_PROJECT_NAME} ${VOICE_INTERNAL_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
 exec "$@"

@@ -117,12 +117,12 @@
         <!-- Navigation Buttons -->
         <div class="d-flex gap-2 mb-3">
           <button class="btn btn--out-room d-flex justify-content-center align-items-center gap-2 shadow-sm flex-grow-1"
-            @click="exitToGroup">
+            @click="exitToGroup" :disabled="isVoiceRecording">
             <i class="material-icons">logout</i>
             <span>退出</span>
           </button>
           <button class="btn btn-info text-white d-flex justify-content-center align-items-center gap-2 shadow-sm flex-grow-1"
-            @click="openUserListWindow">
+            @click="openUserListWindow" :disabled="isVoiceRecording">
             <i class="material-icons">open_in_new</i>
             <span>別窓</span>
           </button>
@@ -130,16 +130,20 @@
 
         <!-- Media Controls -->
         <div class="d-flex gap-2">
-          <button class="btn btn-info shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2">
+          <button class="btn btn-info shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2"
+            :disabled="isVoiceRecording">
             <i class="material-icons">mic_off</i>
           </button>
-          <button class="btn btn-info shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2">
+          <button class="btn btn-info shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2"
+            :disabled="isVoiceRecording">
             <i class="material-icons">videocam_off</i>
           </button>
-          <button class="btn btn-info shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2">
+          <button class="btn btn-info shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2"
+            :disabled="isVoiceRecording">
             <i class="material-icons">screen_share</i>
           </button>
-          <button class="btn btn-info shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2">
+          <button class="btn btn-info shadow-sm flex-grow-1 d-flex justify-content-center align-items-center p-2"
+            :disabled="isVoiceRecording">
             <i class="material-icons">settings</i>
           </button>
         </div>
@@ -227,10 +231,15 @@
       <div class="p-3 bg-light border-top">
         <div class="d-flex gap-2">
           <input type="text" v-model="meetingMessageCreateForm.content" class="form-control shadow-sm p-2"
-            placeholder="メッセージを入力...">
+            placeholder="メッセージを入力..." :disabled="isVoiceRecording">
           <button class="btn btn-info d-flex justify-content-center align-items-center shadow-sm px-3"
-            @click="onCreateMessage" :disabled="isLoading">
+            @click="onCreateMessage" :disabled="isLoading || isVoiceRecording">
             <i class="material-icons">send</i>
+          </button>
+          <!-- 音声入力開始ボタン -->
+          <button class="btn btn-info d-flex justify-content-center align-items-center shadow-sm px-3"
+            @click="onVoiceToText" :disabled="isVoiceRecording">
+            <i class="material-icons">mic</i>
           </button>
         </div>
       </div>
@@ -248,9 +257,14 @@
             <span class="fw-semibold">音声認識状態</span>
           </div>
           <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" v-model="voiceRecognitionEnabled">
+            <input class="form-check-input" type="checkbox" v-model="voiceRecognitionEnabled" :disabled="isVoiceRecording">
             <label class="form-check-label">無効/有効</label>
           </div>
+          <!-- 音声入力中のキャンセルボタンを表示 -->
+          <button v-if="isVoiceRecording" class="btn btn-danger btn-sm mt-3"
+            @click="cancelVoiceInput">
+            キャンセル
+          </button>
         </div>
       </div>
 
@@ -348,11 +362,8 @@
           },
           meetingMemberList: [],
           meetingData: {
-            name: "",  // 空文字列で初期化
-            description: "" // 空文字列で初期化
-          },
-          userData: {
-            username: "Username"
+            name: "",
+            description: ""
           },
           userListWindowOpen: false,
           voiceRecognitionEnabled: false,
@@ -361,10 +372,14 @@
           kickVotes: [],
           showVoteModal: false,
           selectedMember: null,
-          votingInProgress: false
+          votingInProgress: false,
+
+          // 音声認識用の状態管理
+          isVoiceRecording: false,        // 音声認識中かどうか
+          voiceSocket: null,             // 音声用WebSocket
+          mediaRecorder: null            // MediaRecorder
         };
       },
-
 
       watch: {
         // meetingMemberListの変更を監視して別ウィンドウに通知
@@ -436,6 +451,7 @@
         axios.defaults.xsrfHeaderName = "X-CSRFToken";
         axios.defaults.withCredentials = true;
 
+        // 他の用途向け WebSocket (例: 新メッセージ・キック投票通知等)
         this.websocket = new WebSocket(`wss://${location.host}/ws/meeting/{{ meeting.id }}/`);
         this.websocket.onmessage = async (event) => {
           const messageData = event.data;
@@ -463,6 +479,99 @@
       },
 
       methods: {
+        // 音声入力開始ボタン押下時に呼ばれるメソッド
+        async onVoiceToText() {
+          if (this.isVoiceRecording) return; // 二重起動防止
+          this.isVoiceRecording = true;
+
+          // ほかのボタンは :disabled="isVoiceRecording" で自動的に無効化される
+          const voiceId = "{{ user.id}}";
+          const wsUrl = `wss://${window.location.host}/ws-voice/${voiceId}/`;
+
+          // WebSocket 接続
+          this.voiceSocket = new WebSocket(wsUrl);
+
+          // WebSocket オープン時に音声キャプチャを開始
+          this.voiceSocket.onopen = async () => {
+            console.log("Voice WebSocket接続が確立されました");
+
+            // マイクから音声データ取得
+            try {
+              const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+              this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+
+              this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0 && this.voiceSocket?.readyState === WebSocket.OPEN) {
+                  // Binaryデータとして送信
+                  event.data.arrayBuffer().then(buffer => {
+                    this.voiceSocket.send(buffer);
+                  });
+                }
+              };
+
+              // 定期的に音声データをチャンク送信
+              this.mediaRecorder.start(300); // 300msごとに分割送信
+            } catch (err) {
+              console.error("マイクへのアクセスが拒否されました:", err);
+              this.stopVoiceRecognition(); // 後片付け
+            }
+          };
+
+          // 部分認識 / 完全認識の受信
+          this.voiceSocket.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              // data: { text: "...", is_completed: boolean }
+
+              if (typeof data.text === 'string') {
+                // 不完全 or 完全に関わらず、一旦テキストを入力フォームに反映
+                this.meetingMessageCreateForm.content = data.text;
+              }
+
+              if (data.is_completed === true) {
+                // 認識が確定したら録音停止 & WebSocket切断
+                this.stopVoiceRecognition();
+              }
+            } catch (parseError) {
+              console.error("JSONパースエラー:", parseError);
+            }
+          };
+
+          // WebSocketが閉じられた場合
+          this.voiceSocket.onclose = () => {
+            console.log("Voice WebSocket接続が閉じられました");
+            this.stopVoiceRecognition();
+          };
+
+          // WebSocketエラー時
+          this.voiceSocket.onerror = (err) => {
+            console.error("Voice WebSocketエラー:", err);
+            this.stopVoiceRecognition();
+          };
+        },
+
+        // 音声入力を強制停止（キャンセル）するメソッド
+        cancelVoiceInput() {
+          if (!this.isVoiceRecording) return;
+          // 録音やWebSocketを停止し、他のボタン操作を可能にする
+          this.stopVoiceRecognition();
+          // 必要に応じて入力テキストをクリアするならここで可能
+          // this.meetingMessageCreateForm.content = "";
+        },
+
+        // 音声認識セッションを停止して片付ける
+        stopVoiceRecognition() {
+          if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+            this.mediaRecorder.stop();
+            this.mediaRecorder = null;
+          }
+          if (this.voiceSocket && this.voiceSocket.readyState === WebSocket.OPEN) {
+            this.voiceSocket.close();
+          }
+          this.voiceSocket = null;
+          this.isVoiceRecording = false;
+        },
+
         // 投票状態を適切に初期化するロジック
         initializeVotingState() {
           this.isVoting = false;
@@ -470,6 +579,7 @@
           this.selectedMember = null;
           this.showVoteModal = false;
         },
+
         async onCreateMessage() {
           try {
             this.isLoading = true;
@@ -579,21 +689,15 @@
           this.showVoteModal = true;
         },
 
-        // キックされているかチェック
-
-
         isKicked(member) {
           if (!member || !this.kickVotes) return false;
           const memberVotes = this.kickVotes.find(vote => vote.member_id === member.id);
           return memberVotes && memberVotes.is_kicked;
         },
 
-        // 必要な投票数を取得(例：参加者の過半数)
         getRequiredVotes() {
           return Math.ceil((this.meetingMemberList.length || 1) / 2);
         },
-
-        // 現在の投票数を取得
 
         getCurrentVotes(memberId) {
           const memberVotes = this.kickVotes.find(vote => vote.member_id === memberId);
@@ -616,5 +720,4 @@
     app.mount('#app');
   </script>
 </body>
-
 </html>
