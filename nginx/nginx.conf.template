@@ -5,8 +5,10 @@ http {
         listen 80;
         server_name ${NGINX_SERVER_NAME};
 
-        location /static/ {
-            root /${COMPOSE_PROJECT_NAME}/django;
+
+         location /static/ {
+            alias /${COMPOSE_PROJECT_NAME}/django/staticfiles/;
+            autoindex on;
         }
 
         location /.well-known/acme-challenge/ {
