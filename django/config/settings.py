@@ -61,11 +61,11 @@ INSTALLED_APPS = [
 # Redirects
 # https://docs.djangoproject.com/en/5.1/ref/settings/#login-redirect-url
 
-LOGIN_URL = '/user/authentication/'
+LOGIN_URL = '/user/login/'
 
 LOGIN_REDIRECT_URL = '/user/'
 
-LOGOUT_REDIRECT_URL = '/user/authentication/'
+LOGOUT_REDIRECT_URL = '/user/logout/'
 
 
 # Rest framework
