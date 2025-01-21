@@ -428,7 +428,7 @@ class MeetingMessageAnnotationAPIView(APIView):
             serializer.is_valid(raise_exception=True)
 
             # Save meeting
-            meeting_message_annotation = serializer.save(message=meeting_message)
+            meeting_message_annotation = serializer.save(message=meeting_message, meeting=meeting)
 
             # Validate data
             out_serializer = self.GetOutSerializer(meeting_message_annotation)

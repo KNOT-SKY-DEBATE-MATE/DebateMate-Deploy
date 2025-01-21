@@ -138,7 +138,7 @@ class MeetingMessageAnnotation(models.Model):
     """
 
     # Fields
-    message = models.ForeignKey(MeetingMessage, on_delete=models.CASCADE)
+    meeting = models.ForeignKey(Meeting, on_delete=models.CASCADE)
 
     # Fields
     summary = models.TextField(max_length=255, blank=True)
