@@ -116,7 +116,7 @@ async def onannotate(body: Request = Body(...)):
         response = json.loads(response)
 
         # Log response
-        LOGGER.info(response)
+        LOGGER.error(response)
 
         # Parse response and return
         return response

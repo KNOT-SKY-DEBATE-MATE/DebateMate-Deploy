@@ -1,5 +1,6 @@
 python-decouple
 django[argon2]
+django-otp
 django-allauth
 django-nh3
 django-redis
