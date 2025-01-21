@@ -55,7 +55,7 @@ functions = [
                     "type": "string",
                     "description": "ポリシー違反やメンバーの行動に関する警告。",
                     "maxLength": 255
-                }
+                },
             },
             "required": ["summary", "suggestion", "evaluation"]
         }
