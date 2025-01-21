@@ -279,17 +279,14 @@ class MeetingMessageAPIView(APIView):
         meeting = get_object_or_404(Meeting, id=meeting_id)
 
         # Check if user is a member of any meeting
-        if not MeetingMember.objects\
-                .filter(meeting=meeting, user=request.user, is_kicked=False)\
-                .exists():
-            return Response(status=403)
+        meeting_member = get_object_or_404(MeetingMember, meeting=meeting, user=request.user)
 
         # Get data from request
         serializer = self.PostSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
         # Save meeting
-        meeting_message = serializer.save(sender=request.user, meeting=meeting)
+        meeting_message = serializer.save(meeting=meeting, sender=meeting_member.user)
 
         # Validate data
         out_serializer = self.PostOutSerializer(meeting_message)

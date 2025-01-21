@@ -376,7 +376,7 @@ class GroupMessageAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         # Save group-message
-        group_message = serializer.save(group=group, sender=group_member)
+        group_message = serializer.save(group=group, sender=group_member.user)
 
         # Post event to websocket
         try:
