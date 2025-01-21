@@ -112,6 +112,9 @@ async def onannotate(body: Request = Body(...)):
             temperature=1.0,
         ).choices[0].message.function_call.arguments
 
+        # Log response
+        LOGGER.info(response.keys())
+
         # Parse response and return
         return json.loads(response)
 
