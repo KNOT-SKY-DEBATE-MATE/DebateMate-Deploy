@@ -143,9 +143,9 @@
         <div class="d-flex flex-column gap-3">
           <div v-for="groupMember in groupMemberList" :key="groupMember.id" 
                class="d-flex align-items-center gap-2">
-            <img :src="`https://api.dicebear.com/6.x/identicon/png?seed=user:${groupMember.id}&size=128`" alt="Member Icon" 
+            <img :src="'https://api.dicebear.com/6.x/identicon/png?seed=user:' + groupMember.id + '&size=128'" alt="Member Icon" 
                  class="rounded-circle shadow-sm" width="40" height="40">
-            <h6 class="mb-0 text-truncate">[[ groupMember.username ]]</h6>
+            <h6 class="mb-0 text-truncate">[[ groupMember.user.username ]]</h6>
           </div>
         </div>
       </div>
