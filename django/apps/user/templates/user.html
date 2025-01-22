@@ -57,8 +57,9 @@
       <div class="container py-2">
         <!-- 左側のユーザー情報 -->
         <div class="d-flex align-items-center gap-3">
-          <img class="rounded-circle shadow-sm" src="https://placehold.jp/40x40.png" alt="User Icon" width="40"
-            height="40">
+          <img class="rounded-circle shadow-sm"
+            src="https://api.dicebear.com/6.x/identicon/png?seed=user:{{ user.id }}&size=128"
+            alt="User Icon" width="40" height="40">
           <h6 class="mb-0 fw-bold">{{ user.username }}</h6>
         </div>
         <!-- 右側のボタングループ -->
@@ -83,8 +84,9 @@
           <div class="card h-100 border-0 shadow-sm rounded-4 transition-transform hover-translate-up">
             <div class="card-body p-4">
               <div class="d-flex gap-4 mb-4">
-                <img class="rounded-4 object-fit-cover shadow-sm" :src="userGroup.icon" alt="Group Icon" width="100"
-                  height="100">
+                <img class="rounded-4 object-fit-cover shadow-sm"
+                  :src="'https://api.dicebear.com/6.x/identicon/png?seed=group:' + userGroup.id + '&size=128'" alt="Group Icon"
+                  width="100" height="100">
                 <div class="d-flex flex-column justify-content-center">
                   <h5 class="card-title fw-bold mb-2">[[ userGroup.name ]]</h5>
                   <p class="card-text text-muted small">[[ userGroup.description ]]</p>
