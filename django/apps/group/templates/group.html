@@ -255,9 +255,9 @@
           groupMeetingList: [],
           groupMeetingCreateFormIsOpen: false,
           groupMeetingCreateForm: {
-            title: "",      // 'name'から'title'に変更
-            description: "",
             group: "{{ group.id }}",
+            title: "",
+            description: "",
           },
           groupMemberList: [],
           groupInvitableList: [],
@@ -295,8 +295,9 @@
         axios.defaults.xsrfCookieName = "csrftoken";
         axios.defaults.xsrfHeaderName = "X-CSRFToken";
         axios.defaults.withCredentials = true;
-        this.websocket = new WebSocket(`wss://${window.location.hostname}/ws/group/{{ group.id }}/`);
+        this.websocket = new WebSocket(`wss://${location.host}/ws/group/{{ group.id }}/`);
         this.websocket.onmessage = async (event) => {
+          // On create message
           if (event.data === "MESSAGE.CREATE") try {
             this.groupMessageList = (await axios.get("/api/group/{{ group.id }}/message/")).data;
             this.$nextTick(() => ((e) => { e.scrollTop = e.scrollHeight; })(document.getElementById('message-list')));
@@ -307,6 +308,7 @@
               console.error(`ERROR: ${error.response.status} ${error.response.statusText}`);
             }
           }
+          // On create meeting
           if (event.data === "MEETING.CREATE") try {
             this.groupMeetingList = (await axios.get("/api/group/{{ group.id }}/meeting/")).data;
           } catch (error) {
@@ -390,10 +392,7 @@
           try {
             this.isLoading = true;
             await axios.get("/api/user/csrftoken/");
-            this.groupMemberList.push((await axios.post("/api/group/{{ group.id }}/member/", {
-              user: user.id,
-              nickname: user.username,
-            })).data);
+            this.groupMemberList.push((await axios.post("/api/group/{{ group.id }}/member/", { user: user.id })).data);
             this.groupInvitableList = (await axios.get("/api/group/{{ group.id }}/member/invitable/", this.groupInviteForm)).data;
           } catch (error) {
             if (error.response === undefined) {
