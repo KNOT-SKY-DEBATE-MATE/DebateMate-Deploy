@@ -111,7 +111,7 @@
             <div class="card border-0 shadow-sm w-75">
               <div class="card-body py-2 px-3">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                  <h6 class="mb-0 fw-bold">[[ groupMessage.sender.nickname ]]</h6>
+                  <h6 class="mb-0 fw-bold">[[ groupMessage.sender.username ]]</h6>
                   <small class="text-muted">[[ groupMessage.created_at ]]</small>
                 </div>
                 <p class="mb-0">[[ groupMessage.content ]]</p>
@@ -145,7 +145,7 @@
                class="d-flex align-items-center gap-2">
             <img :src="`https://api.dicebear.com/6.x/identicon/png?seed=user:${groupMember.id}&size=128`" alt="Member Icon" 
                  class="rounded-circle shadow-sm" width="40" height="40">
-            <h6 class="mb-0 text-truncate">[[ groupMember.nickname ]]</h6>
+            <h6 class="mb-0 text-truncate">[[ groupMember.username ]]</h6>
           </div>
         </div>
       </div>
@@ -298,6 +298,15 @@
           if (event.data === "MESSAGE.CREATE") try {
             this.groupMessageList = (await axios.get("/api/group/{{ group.id }}/message/")).data;
             this.$nextTick(() => ((e) => { e.scrollTop = e.scrollHeight; })(document.getElementById('message-list')));
+          } catch (error) {
+            if (error.response === undefined) {
+              console.error("ERROR: Unknown error");
+            } else {
+              console.error(`ERROR: ${error.response.status} ${error.response.statusText}`);
+            }
+          }
+          if (event.data === "MEETING.CREATE") try {
+            this.groupMeetingList = (await axios.get("/api/group/{{ group.id }}/meeting/")).data;
           } catch (error) {
             if (error.response === undefined) {
               console.error("ERROR: Unknown error");
